@@ -43,11 +43,11 @@ const ImportMarkersGPXFileButton = ({
       const marker: L.Marker = L.marker(latLng);
       if (actionRadius) {
         createCircleWithActionRadius(
-          marker,
+          {marker,
           idForMarkers,
           productDensity,
           productColor,
-          hiddenMarkersByDraggingCircles
+          hiddenMarkersByDraggingCircles}
         );
         setIdForMarkers(idForMarkers + 1); //idForMarkers += 1;
         //this.mapService.markedProducts += 1;

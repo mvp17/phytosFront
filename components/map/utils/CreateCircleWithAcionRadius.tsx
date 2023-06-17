@@ -1,15 +1,22 @@
 import * as L from "leaflet";
 import { useMap } from "react-leaflet";
 
-const CreateCircleWithActionRadius = (
+interface IProps {
   marker: L.Marker,
   idForMarkers: number,
   productDensity: number,
   productColor: string,
   hiddenMarkersByDraggingCircles: Map<string, number[]>
-) => {
-  const map = useMap();
+}
 
+const CreateCircleWithActionRadius = (
+  {marker,
+  idForMarkers,
+  productDensity,
+  productColor,
+  hiddenMarkersByDraggingCircles} : IProps) => {
+    
+  const map = useMap();
   marker.setIcon(
     L.divIcon({
       html: "&nbsp;&nbsp;&nbsp;&nbsp;" + idForMarkers.toString() + "</b>"
