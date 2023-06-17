@@ -248,6 +248,7 @@ const SeasonsPage = () => {
                 multiple: 3
               }}
               filterIcon={() => <SearchOutlined />}
+              render={(value) => <Input type="color" value={value} disabled />}
             />
             <Column
               align={"center"}

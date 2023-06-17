@@ -12,8 +12,10 @@ import {
   Input,
   Space,
   Popconfirm,
-  Tooltip
+  Tooltip,
+  Select
 } from "antd";
+import type {SelectProps} from "antd";
 import {
   SearchOutlined,
   QuestionCircleOutlined,
@@ -26,6 +28,11 @@ import { IInstallation } from "./Installation";
 import { useInstallationStore } from "./InstallationsStore";
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import { useSeasonStore } from "../seasons/SeasonsStore";
+import { useClientStore } from "../clients/ClientsStore";
+import { usePersonStore } from "../persons/PersonsStore";
+import { useProductStore } from "../products/ProductsStore";
+import { IPerson } from "../persons/Person";
 
 const { Column } = Table;
 
@@ -47,6 +54,7 @@ const InstallationsPage = () => {
     setEditInstallationFormVisible
   ] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<IInstallation>();
+  const [contactsList, setContactsList] = useState<IPerson[]>([]);
 
   const [createForm] = useForm();
   const [editForm] = useForm();
@@ -54,36 +62,105 @@ const InstallationsPage = () => {
   const allInstallations = useInstallationStore(
     (state) => state.installationsData
   );
-  const callGetApi = useInstallationStore((state) => state.getApi);
-  const callPostApi = useInstallationStore(
+  const getInstallationsApi = useInstallationStore((state) => state.getApi);
+  const postInstallationApi = useInstallationStore(
     (state) => state.createInstallationApi
   );
-  const callPutApi = useInstallationStore(
+  const putInstallationApi = useInstallationStore(
     (state) => state.updateInstallationApi
   );
-  const callDeleteApi = useInstallationStore(
+  const deleteInstallationApi = useInstallationStore(
     (state) => state.deleteInstallationApi
   );
 
+  const allSeasons = useSeasonStore((state) => state.seasonsData);
+  const getSeasonsApi = useSeasonStore((state) => state.getApi);
+
+  const allClients = useClientStore((state) => state.clientsData);
+  const getClientsApi = useClientStore((state) => state.getApi);
+
+  const allPersons = usePersonStore((state) => state.personsData);
+  const getPersonsApi = usePersonStore((state) => state.getApi);
+
+  const allProducts = useProductStore((state) => state.productsData);
+  const getProductsApi = useProductStore((state) => state.getApi);
+
+  const seasons: SelectProps['options'] = 
+    allSeasons.map((season) => {
+      return {
+        value: season.year,
+        label: season.year
+      }
+    });
+  
+  const clients: SelectProps['options'] = 
+    allClients.map((client) => {
+      return {
+        value: client.name,
+        label: client.name
+      }
+    });
+  
+  const products: SelectProps['options'] = 
+    allProducts.map((product) => {
+      return {
+        value: product.commonName,
+        label: product.commonName
+      }
+    });
+  
+
   useEffect(() => {
-    if (allInstallations.length === 0) {
-      setDataSourceLoading(true);
-      callGetApi(session?.jwtToken!);
-      setDataSourceLoading(false);
-    }
+    if (allInstallations.length === 0) 
+      getInstallations();
+
+    if (allSeasons.length === 0)
+      getSeasons();
+
+    if (allClients.length === 0)
+      getClients()
+    
+    if (allProducts.length === 0)
+      getProducts()
+
   }, []);
+
+  const getInstallations = () => {
+    setDataSourceLoading(true);
+    getInstallationsApi(session?.jwtToken!);
+    setDataSourceLoading(false);
+  };
+
+  const getSeasons = () => {
+    setDataSourceLoading(true);
+    getSeasonsApi(session?.jwtToken!);
+    setDataSourceLoading(false);
+  };
+
+  const getClients = () => {
+    setDataSourceLoading(true);
+    getClientsApi(session?.jwtToken!)
+    setDataSourceLoading(false);
+  };
+
+  const getProducts = () => {
+    setDataSourceLoading(true);
+    getProductsApi(session?.jwtToken!)
+    setDataSourceLoading(false);
+  };
 
   const closeCreateModal = () => {
     setCreateInstallationFormVisible(false);
     createForm.resetFields();
   };
+
   const closeEditModal = () => {
     editForm.resetFields();
     setEditInstallationFormVisible(false);
   };
 
   const onFinishCreateInstallationForm = (installation: IInstallation) => {
-    callPostApi(installation, session?.jwtToken!)
+    postInstallationApi(installation, session?.jwtToken!)
       .then(() => {
         closeCreateModal();
         message.success("The installation has been created successfully.");
@@ -94,7 +171,7 @@ const InstallationsPage = () => {
   };
 
   const onFinishEditInstallationForm = (installation: IInstallation) => {
-    callPutApi(installation, currentRecord!._id, session?.jwtToken!)
+    putInstallationApi(installation, currentRecord!._id, session?.jwtToken!)
       .then(() => {
         closeEditModal();
         message.success("The installation has been updated successfully.");
@@ -105,13 +182,17 @@ const InstallationsPage = () => {
   };
 
   const deleteInstallation = (_id: string) => {
-    callDeleteApi(_id, session?.jwtToken!)
+    deleteInstallationApi(_id, session?.jwtToken!)
       .then(() => {
         message.success("The installation has been deleted successfully.");
       })
       .catch((err) => {
         message.error(err.toString());
       });
+  };
+
+  const handleChange = (value: { value: string; label: React.ReactNode }) => {
+    console.log(value);
   };
 
   // **********Modal******* //
@@ -160,28 +241,43 @@ const InstallationsPage = () => {
               </Form.Item>
               <Form.Item
                 name={"productName"}
-                label={"Product Name"}
+                label={"Product name"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Product Name"} />
+                <Select
+                  style={{ width: '100%' }}
+                  options={products}
+                />
               </Form.Item>
               <Form.Item
                 name={"seasonYear"}
-                label={"Season Year"}
+                label={"Season year"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Season Year"} />
+                <Select
+                  style={{ width: '100%' }}
+                  options={seasons}
+                />
               </Form.Item>
               <Form.Item
                 name={"clientName"}
-                label={"Client Name"}
+                label={"Client name"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Client Name"} />
+                <Select
+                  style={{ width: '100%' }}
+                  onChange={handleChange}
+                  options={clients}
+                />
               </Form.Item>
+
+
+
+
+
               <Form.Item
                 name={"plantationName"}
                 label={"Plantation Name"}
@@ -301,20 +397,33 @@ const InstallationsPage = () => {
               </Form.Item>
               <Form.Item
                 name={"seasonYear"}
-                label={"Season Year"}
+                label={"Season year"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Season Year"} />
+                <Select
+                  style={{ width: '100%' }}
+                  options={seasons}
+                />
               </Form.Item>
               <Form.Item
                 name={"clientName"}
-                label={"Client Name"}
+                label={"Client name"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Client Name"} />
+                <Select
+                  style={{ width: '100%' }}
+                  onChange={handleChange}
+                  options={clients}
+                />
               </Form.Item>
+
+
+
+
+
+
               <Form.Item
                 name={"plantationName"}
                 label={"Plantation Name"}

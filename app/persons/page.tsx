@@ -12,8 +12,10 @@ import {
   Input,
   Space,
   Popconfirm,
-  Tooltip
+  Tooltip,
+  Select
 } from "antd";
+import type {SelectProps} from "antd";
 import {
   SearchOutlined,
   QuestionCircleOutlined,
@@ -26,6 +28,7 @@ import { IPerson } from "./Person";
 import { usePersonStore } from "./PersonsStore";
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import { useClientStore } from "../clients/ClientsStore";
 
 const { Column } = Table;
 
@@ -47,18 +50,41 @@ const PersonsPage = () => {
   const [editForm] = useForm();
 
   const allPersons = usePersonStore((state) => state.personsData);
-  const callGetApi = usePersonStore((state) => state.getApi);
-  const callPostApi = usePersonStore((state) => state.createPersonApi);
-  const callPutApi = usePersonStore((state) => state.updatePersonApi);
-  const callDeleteApi = usePersonStore((state) => state.deletePersonApi);
+  const getPersonsApi = usePersonStore((state) => state.getApi);
+  const postPersonApi = usePersonStore((state) => state.createPersonApi);
+  const putPersonApi = usePersonStore((state) => state.updatePersonApi);
+  const deletePersonApi = usePersonStore((state) => state.deletePersonApi);
+
+  const allClients = useClientStore((state) => state.clientsData);
+  const getClientsApi = useClientStore((state) => state.getApi);
+
+  const clients: SelectProps['options'] = 
+    allClients.map((client) => {
+      return {
+        value: client.name,
+        label: client.name
+      }
+    });
 
   useEffect(() => {
-    if (allPersons.length === 0) {
-      setDataSourceLoading(true);
-      callGetApi(session?.jwtToken!);
-      setDataSourceLoading(false);
-    }
+    if (allPersons.length === 0)
+      getPersons();
+    if (allClients.length === 0)
+      getClients()
   }, []);
+
+  const getClients = () => {
+    setDataSourceLoading(true);
+    getClientsApi(session?.jwtToken!)
+    setDataSourceLoading(false);
+  };
+
+  const getPersons = () => {
+    setDataSourceLoading(true);
+    getPersonsApi(session?.jwtToken!);
+    setDataSourceLoading(false);
+  };
+
 
   const closeCreateModal = () => {
     setCreatePersonFormVisible(false);
@@ -70,7 +96,7 @@ const PersonsPage = () => {
   };
 
   const onFinishCreatePersonForm = (person: IPerson) => {
-    callPostApi(person, session?.jwtToken!)
+    postPersonApi(person, session?.jwtToken!)
       .then(() => {
         closeCreateModal();
         message.success("The person has been created successfully.");
@@ -81,7 +107,7 @@ const PersonsPage = () => {
   };
 
   const onFinishEditPersonForm = (person: IPerson) => {
-    callPutApi(person, currentRecord!._id, session?.jwtToken!)
+    putPersonApi(person, currentRecord!._id, session?.jwtToken!)
       .then(() => {
         closeEditModal();
         message.success("The person has been updated successfully.");
@@ -92,7 +118,7 @@ const PersonsPage = () => {
   };
 
   const deletePerson = (_id: string) => {
-    callDeleteApi(_id, session?.jwtToken!)
+    deletePersonApi(_id, session?.jwtToken!)
       .then(() => {
         message.success("The person has been deleted successfully.");
       })
@@ -154,12 +180,23 @@ const PersonsPage = () => {
                 <Input type="text" placeholder={"Person Email"} />
               </Form.Item>
               <Form.Item
-                name={"phone number"}
+                name={"phoneNumber"}
                 label={"Phone number"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
                 <Input type="number" placeholder={"Person Phone number"} />
+              </Form.Item>
+              <Form.Item
+                name={"relatedClient"}
+                label={"Client name"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={clients}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -197,12 +234,23 @@ const PersonsPage = () => {
                 <Input type="text" placeholder={"Person Email"} />
               </Form.Item>
               <Form.Item
-                name={"phone number"}
+                name={"phoneNumber"}
                 label={"Phone number"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
                 <Input type="number" placeholder={"Person Phone number"} />
+              </Form.Item>
+              <Form.Item
+                name={"relatedClient"}
+                label={"Client name"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={clients}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -266,9 +314,22 @@ const PersonsPage = () => {
             />
             <Column
               align={"center"}
-              title="Telephone Number"
-              dataIndex="telephone_number"
-              key="telephone_number"
+              title="Phone Number"
+              dataIndex="phoneNumber"
+              key="phoneNumber"
+              sortDirections={["descend", "ascend"]}
+              sorter={{
+                compare: (a: IPerson, b: IPerson) =>
+                  alphabeticalSort(a._id, b._id),
+                multiple: 3
+              }}
+              filterIcon={() => <SearchOutlined />}
+            />
+            <Column
+              align={"center"}
+              title="Related Client"
+              dataIndex="relatedClient"
+              key="relatedClient"
               sortDirections={["descend", "ascend"]}
               sorter={{
                 compare: (a: IPerson, b: IPerson) =>
