@@ -13,7 +13,8 @@ import {
   Space,
   Popconfirm,
   Tooltip,
-  Select
+  Select,
+  Tag
 } from "antd";
 import type {SelectProps} from "antd";
 import {
@@ -54,7 +55,7 @@ const InstallationsPage = () => {
     setEditInstallationFormVisible
   ] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<IInstallation>();
-  const [contactsList, setContactsList] = useState<IPerson[]>([]);
+  const [contacts, setContacts] = useState<IPerson[]>([])
 
   const [createForm] = useForm();
   const [editForm] = useForm();
@@ -107,8 +108,7 @@ const InstallationsPage = () => {
         value: product.commonName,
         label: product.commonName
       }
-    });
-  
+    });  
 
   useEffect(() => {
     if (allInstallations.length === 0) 
@@ -122,8 +122,12 @@ const InstallationsPage = () => {
     
     if (allProducts.length === 0)
       getProducts()
-
-  }, []);
+    
+    if (allPersons.length === 0)
+      getPersons()
+      // You should have the useEffect() subscribe to the props so that it runs whenever there is a change to either, 
+      // instead of running a single-time after the first mount.
+  }, [contacts]);
 
   const getInstallations = () => {
     setDataSourceLoading(true);
@@ -134,6 +138,12 @@ const InstallationsPage = () => {
   const getSeasons = () => {
     setDataSourceLoading(true);
     getSeasonsApi(session?.jwtToken!);
+    setDataSourceLoading(false);
+  };
+
+  const getPersons = () => {
+    setDataSourceLoading(true);
+    getPersonsApi(session?.jwtToken!);
     setDataSourceLoading(false);
   };
 
@@ -153,6 +163,14 @@ const InstallationsPage = () => {
     setCreateInstallationFormVisible(false);
     createForm.resetFields();
   };
+
+  const getContacts = (contacts: string[]) => {
+    return contacts.map((item) =>{
+      <Tag key={item} color="blue">
+        {item}
+      </Tag>
+    })
+  }
 
   const closeEditModal = () => {
     editForm.resetFields();
@@ -191,8 +209,8 @@ const InstallationsPage = () => {
       });
   };
 
-  const handleChange = (value: { value: string; label: React.ReactNode }) => {
-    console.log(value);
+  const handleClientChange = (client: string) => {
+    setContacts(allPersons.filter((person: IPerson) => person.relatedClient === client));
   };
 
   // **********Modal******* //
@@ -269,15 +287,22 @@ const InstallationsPage = () => {
               >
                 <Select
                   style={{ width: '100%' }}
-                  onChange={handleChange}
+                  onChange={handleClientChange}
                   options={clients}
                 />
               </Form.Item>
-
-
-
-
-
+              <Form.Item
+                name={"contacts"}
+                label={"Contact list"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  mode="multiple"
+                  options={contacts.map((contact) => ({label: contact.name, value: contact.name}))}
+                />
+              </Form.Item>
               <Form.Item
                 name={"plantationName"}
                 label={"Plantation Name"}
@@ -321,12 +346,20 @@ const InstallationsPage = () => {
                 <Input type="text" placeholder={"Province"} />
               </Form.Item>
               <Form.Item
-                name={"characteristics"}
-                label={"Characteristics"}
+                name={"municipality"}
+                label={"Municipality"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
-                <Input type="text" placeholder={"Characteristics"} />
+                <Input type="text" placeholder={"Municipality"} />
+              </Form.Item>
+              <Form.Item
+                name={"features"}
+                label={"Features"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Input type="text" placeholder={"Features"} />
               </Form.Item>
               <Form.Item
                 name={"projectionObservations"}
@@ -414,16 +447,22 @@ const InstallationsPage = () => {
               >
                 <Select
                   style={{ width: '100%' }}
-                  onChange={handleChange}
+                  onChange={handleClientChange}
                   options={clients}
                 />
               </Form.Item>
-
-
-
-
-
-
+              <Form.Item
+                name={"contacts"}
+                label={"Contact list"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  mode="multiple"
+                  options={contacts.map((contact) => ({label: contact.name, value: contact.name}))}
+                />
+              </Form.Item>
               <Form.Item
                 name={"plantationName"}
                 label={"Plantation Name"}
@@ -465,8 +504,16 @@ const InstallationsPage = () => {
                 <Input type="text" placeholder={"Province"} />
               </Form.Item>
               <Form.Item
-                name={"characteristics"}
-                label={"Characteristics"}
+                name={"municipality"}
+                label={"Municipality"}
+                rules={[{ required: true }]}
+                hasFeedback
+              >
+                <Input type="text" placeholder={"Municipality"} />
+              </Form.Item>
+              <Form.Item
+                name={"features"}
+                label={"Features"}
                 rules={[{ required: true }]}
                 hasFeedback
               >
@@ -577,6 +624,19 @@ const InstallationsPage = () => {
               }}
               filterIcon={() => <SearchOutlined />}
             />
+            <Column
+              align={"center"}
+              title="Contacts List"
+              dataIndex="contacts"
+              key="contacts"
+              sortDirections={["descend", "ascend"]}
+              sorter={{
+                compare: (a: IInstallation, b: IInstallation) =>
+                  alphabeticalSort(a._id, b._id),
+                multiple: 3
+              }}
+              filterIcon={() => <SearchOutlined />}
+              render={(_, record) => record.contacts.map((item:string) => (<Tag key={item} color="blue">{item}</Tag>))}/>
             <Column
               align={"center"}
               title="Plantation Name"

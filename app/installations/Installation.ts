@@ -15,7 +15,7 @@ export interface IInstallation {
   installationObservations: string;
   revisionObservations: string;
   retreatObservations: string;
-  //contacts: string[];
+  contacts: string[];
   key: string;
   index: number;
 }

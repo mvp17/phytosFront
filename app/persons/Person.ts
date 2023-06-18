@@ -5,5 +5,5 @@ export interface IPerson {
   telephone_number: number;
   key: string;
   index: number;
-  //related_client: string;
+  relatedClient: string;
 }
