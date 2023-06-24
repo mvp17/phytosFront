@@ -31,13 +31,6 @@ const { Column } = Table;
 
 
 const ClientsPage = () => {
-  const { data: session } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/api/auth/signin?callbackUrl=/clients');
-    }
-  });
-
   const [dataSourceLoading, setDataSourceLoading] = useState(false);
   const [createClientFormVisible, setCreateClientFormVisible] = useState(false);
   const [editClientFormVisible, setEditClientFormVisible] = useState(false);
@@ -52,6 +45,13 @@ const ClientsPage = () => {
   const callPutApi = useClientStore((state) => state.updateClientApi);
   const callDeleteApi = useClientStore((state) => state.deleteClientApi);
 
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect('/api/auth/signin?callbackUrl=/clients');
+    }
+  });
+
   useEffect(() => {
     if (allClients.length === 0) {
       getClients();
@@ -60,10 +60,10 @@ const ClientsPage = () => {
 
   const getClients = () => {
     setDataSourceLoading(true);
-    callGetApi(session?.jwtToken!);
+    callGetApi();
     setDataSourceLoading(false);
   };
-
+  
   const closeCreateModal = () => {
     setCreateClientFormVisible(false);
     createForm.resetFields();

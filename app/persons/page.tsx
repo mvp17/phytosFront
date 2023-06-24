@@ -75,13 +75,13 @@ const PersonsPage = () => {
 
   const getClients = () => {
     setDataSourceLoading(true);
-    getClientsApi(session?.jwtToken!)
+    getClientsApi()
     setDataSourceLoading(false);
   };
 
   const getPersons = () => {
     setDataSourceLoading(true);
-    getPersonsApi(session?.jwtToken!);
+    getPersonsApi();
     setDataSourceLoading(false);
   };
 

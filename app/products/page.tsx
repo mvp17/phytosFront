@@ -58,7 +58,7 @@ const ProductsPage = () => {
   useEffect(() => {
     if (allProducts.length === 0) {
       setDataSourceLoading(true);
-      callGetApi(session?.jwtToken!);
+      callGetApi();
       setDataSourceLoading(false);
     }
   }, []);

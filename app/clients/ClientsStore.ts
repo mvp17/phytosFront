@@ -4,12 +4,13 @@ import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "@/environment";
 import { IClient } from "./Client";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/clients";
+const baseURL: string = environment.urlConf + "/clients";
 
 interface ClientsState {
   clientsData: IClient[];
-  getApi: (token:string) => void;
+  getApi: () => void;
   createClientApi: (client: IClient, token: string) => Promise<void>;
   updateClientApi: (client: IClient, ref: string, token: string) => Promise<void>;
   deleteClientApi: (id: string, token: string) => Promise<void>;
@@ -31,13 +32,18 @@ export const useClientStore = create<ClientsState>()(
   immer(
     devtools((set) => ({
       clientsData: [],
-      getApi: async (token: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const apiResponse = await reqInstance.get(URL);
+      getApi: async () => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+
+        const apiResponse = await instance.get(baseURL);
         set((state) => {
           state.clientsData = apiResponse.data;
           state.clientsData.map(
@@ -55,7 +61,7 @@ export const useClientStore = create<ClientsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.post(URL, client);
+        const apiResponse = await reqInstance.post(baseURL, client);
         set((state) => {
           state.clientsData.push(apiResponse.data);
           state.clientsData.map(
@@ -73,7 +79,7 @@ export const useClientStore = create<ClientsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.put(URL + `/${id}`, client);
+        const apiResponse = await reqInstance.put(baseURL + `/${id}`, client);
         set((state) => {
           let clientState = state.clientsData.filter(
             (client: IClient) => client._id !== id
@@ -95,7 +101,7 @@ export const useClientStore = create<ClientsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        reqInstance.delete(URL + `/${id}`);
+        reqInstance.delete(baseURL + `/${id}`);
         set((state) => {
           state.clientsData = state.clientsData.filter((_: IClient) => _._id !== id);
         });

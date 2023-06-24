@@ -4,12 +4,13 @@ import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "@/environment";
 import { IPerson } from "./Person";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/persons";
+const baseURL: string = environment.urlConf + "/persons";
 
 interface PersonsState {
   personsData: IPerson[];
-  getApi: (token:string) => void;
+  getApi: () => void;
   createPersonApi: (person: IPerson, token:string) => Promise<void>;
   updatePersonApi: (person: IPerson, ref: string, token:string) => Promise<void>;
   deletePersonApi: (id: string, token:string) => Promise<void>;
@@ -31,13 +32,17 @@ export const usePersonStore = create<PersonsState>()(
   immer(
     devtools((set) => ({
       personsData: [],
-      getApi: async (token:string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const apiResponse = await reqInstance.get(URL);
+      getApi: async () => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+        const apiResponse = await instance.get(baseURL);
         set((state) => {
           state.personsData = apiResponse.data;
           state.personsData.map((person: IPerson, index: number) => {
@@ -54,7 +59,7 @@ export const usePersonStore = create<PersonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.post(URL, person);
+        const apiResponse = await reqInstance.post(baseURL, person);
         set((state) => {
           state.personsData.push(apiResponse.data);
           state.personsData.map((person: IPerson, index: number) => {
@@ -71,7 +76,7 @@ export const usePersonStore = create<PersonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.put(URL + `/${id}`, person);
+        const apiResponse = await reqInstance.put(baseURL + `/${id}`, person);
         set((state) => {
           let personState = state.personsData.filter(
             (person: IPerson) => person._id !== id
@@ -92,7 +97,7 @@ export const usePersonStore = create<PersonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        reqInstance.delete(URL + `/${id}`);
+        reqInstance.delete(baseURL + `/${id}`);
         set((state) => {
           state.personsData = state.personsData.filter(
             (_: IPerson) => _._id !== id

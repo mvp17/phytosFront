@@ -56,7 +56,7 @@ const SeasonsPage = () => {
   useEffect(() => {
     if (allSeasons.length === 0) {
       setDataSourceLoading(true);
-      callGetApi(session?.jwtToken!);
+      callGetApi();
       setDataSourceLoading(false);
     }
   }, []);

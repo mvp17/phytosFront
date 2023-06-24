@@ -4,12 +4,13 @@ import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "@/environment";
 import { IProduct } from "./Product";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/products";
+const baseURL: string = environment.urlConf + "/products";
 
 interface ProductsState {
   productsData: IProduct[];
-  getApi: (token:string) => void;
+  getApi: () => void;
   createProductApi: (product: IProduct, token:string) => Promise<void>;
   updateProductApi: (product: IProduct, ref: string, token:string) => Promise<void>;
   deleteProductApi: (id: string, token:string) => Promise<void>;
@@ -31,13 +32,17 @@ export const useProductStore = create<ProductsState>()(
   immer(
     devtools((set) => ({
       productsData: [],
-      getApi: async (token:string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const apiResponse = await reqInstance.get(URL);
+      getApi: async () => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+        const apiResponse = await instance.get(baseURL);
         set((state) => {
           state.productsData = apiResponse.data;
           state.productsData.map((product: IProduct, index: number) => {
@@ -54,7 +59,7 @@ export const useProductStore = create<ProductsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.post(URL, product);
+        const apiResponse = await reqInstance.post(baseURL, product);
         set((state) => {
           state.productsData.push(apiResponse.data);
           state.productsData.map((product: IProduct, index: number) => {
@@ -71,7 +76,7 @@ export const useProductStore = create<ProductsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.put(URL + `/${id}`, product);
+        const apiResponse = await reqInstance.put(baseURL + `/${id}`, product);
         set((state) => {
           let productState = state.productsData.filter(
             (product: IProduct) => product._id !== id
@@ -92,7 +97,7 @@ export const useProductStore = create<ProductsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        reqInstance.delete(URL + `/${id}`);
+        reqInstance.delete(baseURL + `/${id}`);
         set((state) => {
           state.productsData = state.productsData.filter(
             (_: IProduct) => _._id !== id

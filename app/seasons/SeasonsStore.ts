@@ -4,12 +4,13 @@ import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "@/environment";
 import { ISeason } from "./Season";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/seasons";
+const baseURL: string = environment.urlConf + "/seasons";
 
 interface SeasonsState {
   seasonsData: ISeason[];
-  getApi: (token:string) => void;
+  getApi: () => void;
   createSeasonApi: (season: ISeason, token:string) => Promise<void>;
   updateSeasonApi: (season: ISeason, ref: string, token:string) => Promise<void>;
   deleteSeasonApi: (id: string, token:string) => Promise<void>;
@@ -31,13 +32,17 @@ export const useSeasonStore = create<SeasonsState>()(
   immer(
     devtools((set) => ({
       seasonsData: [],
-      getApi: async (token:string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const apiResponse = await reqInstance.get(URL);
+      getApi: async () => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+        const apiResponse = await instance.get(baseURL);
         set((state) => {
           state.seasonsData = apiResponse.data;
           state.seasonsData.map((season: ISeason, index: number) => {
@@ -54,7 +59,7 @@ export const useSeasonStore = create<SeasonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.post(URL, season);
+        const apiResponse = await reqInstance.post(baseURL, season);
         set((state) => {
           state.seasonsData.push(apiResponse.data);
           state.seasonsData.map((season: ISeason, index: number) => {
@@ -71,7 +76,7 @@ export const useSeasonStore = create<SeasonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        const apiResponse = await reqInstance.put(URL + `/${id}`, season);
+        const apiResponse = await reqInstance.put(baseURL + `/${id}`, season);
         set((state) => {
           let seasonState = state.seasonsData.filter(
             (season: ISeason) => season._id !== id
@@ -92,7 +97,7 @@ export const useSeasonStore = create<SeasonsState>()(
             Authorization: `Bearer ${token}`
           }
         });
-        reqInstance.delete(URL + `/${id}`);
+        reqInstance.delete(baseURL + `/${id}`);
         set((state) => {
           state.seasonsData = state.seasonsData.filter(
             (_: ISeason) => _._id !== id

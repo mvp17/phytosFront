@@ -131,31 +131,31 @@ const InstallationsPage = () => {
 
   const getInstallations = () => {
     setDataSourceLoading(true);
-    getInstallationsApi(session?.jwtToken!);
+    getInstallationsApi();
     setDataSourceLoading(false);
   };
 
   const getSeasons = () => {
     setDataSourceLoading(true);
-    getSeasonsApi(session?.jwtToken!);
+    getSeasonsApi();
     setDataSourceLoading(false);
   };
 
   const getPersons = () => {
     setDataSourceLoading(true);
-    getPersonsApi(session?.jwtToken!);
+    getPersonsApi();
     setDataSourceLoading(false);
   };
 
   const getClients = () => {
     setDataSourceLoading(true);
-    getClientsApi(session?.jwtToken!)
+    getClientsApi()
     setDataSourceLoading(false);
   };
 
   const getProducts = () => {
     setDataSourceLoading(true);
-    getProductsApi(session?.jwtToken!)
+    getProductsApi()
     setDataSourceLoading(false);
   };
 
