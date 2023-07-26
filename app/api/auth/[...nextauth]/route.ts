@@ -1,4 +1,4 @@
-import SignToken from '@/app/utils/SignToken'
+import { signToken } from '@/app/utils/signToken'
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
@@ -34,7 +34,7 @@ const handler = NextAuth({
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (account) {
         token.accessToken = account.access_token;
-        token.loggedUser = await SignToken(user?.id as string);
+        token.loggedUser = await signToken(user?.id as string);
       }
       return token
     }

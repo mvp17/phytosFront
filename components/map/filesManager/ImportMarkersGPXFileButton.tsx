@@ -4,7 +4,7 @@ import UploadIcon from "@mui/icons-material/Upload";
 import { useMap } from "react-leaflet";
 import * as L from "leaflet";
 import { Dispatch, SetStateAction } from "react";
-import createCircleWithActionRadius from "../utils/CreateCircleWithAcionRadius";
+import { createCircleWithActionRadius } from "../utils/createCircleWithAcionRadius";
 
 type Dispatcher = Dispatch<SetStateAction<number>>;
 interface IProps {
@@ -42,13 +42,16 @@ const ImportMarkersGPXFileButton = ({
       );
       const marker: L.Marker = L.marker(latLng);
       if (actionRadius) {
-        createCircleWithActionRadius(
-          {marker,
-          idForMarkers,
-          productDensity,
-          productColor,
-          hiddenMarkersByDraggingCircles}
-        );
+        const propsCircleActionRadius = {
+          props: {
+            marker: marker,
+            idForMarkers: idForMarkers,
+            productDensity: productDensity,
+            productColor: productColor,
+            hiddenMarkersByDraggingCircles: hiddenMarkersByDraggingCircles
+          }
+        }
+        createCircleWithActionRadius(propsCircleActionRadius);
         setIdForMarkers(idForMarkers + 1); //idForMarkers += 1;
         //this.mapService.markedProducts += 1;
       } else {

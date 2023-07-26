@@ -2,37 +2,34 @@ import * as L from "leaflet";
 import { useMap } from "react-leaflet";
 
 interface IProps {
-  marker: L.Marker,
-  idForMarkers: number,
-  productDensity: number,
-  productColor: string,
-  hiddenMarkersByDraggingCircles: Map<string, number[]>
+  props: {
+    marker: L.Marker,
+    idForMarkers: number,
+    productDensity: number,
+    productColor: string,
+    hiddenMarkersByDraggingCircles: Map<string, number[]>
+  }
 }
 
-const CreateCircleWithActionRadius = (
-  {marker,
-  idForMarkers,
-  productDensity,
-  productColor,
-  hiddenMarkersByDraggingCircles} : IProps) => {
+export const createCircleWithActionRadius = ({ props } : IProps) => {
     
   const map = useMap();
-  marker.setIcon(
+  props.marker.setIcon(
     L.divIcon({
-      html: "&nbsp;&nbsp;&nbsp;&nbsp;" + idForMarkers.toString() + "</b>"
+      html: "&nbsp;&nbsp;&nbsp;&nbsp;" + props.idForMarkers.toString() + "</b>"
     })
   );
 
-  marker.bindPopup(idForMarkers.toString());
-  const area: number = (1 / productDensity) * 10000;
+  props.marker.bindPopup(props.idForMarkers.toString());
+  const area: number = (1 / props.productDensity) * 10000;
   let radius: number = Math.sqrt(area / Math.PI);
   radius = Math.ceil(radius);
   //console.log("El radi d'acció del producte utilitzat és: ", radius);
-  const circle: L.Circle = L.circle(marker.getLatLng(), {
-    fillColor: productColor,
+  const circle: L.Circle = L.circle(props.marker.getLatLng(), {
+    fillColor: props.productColor,
     color: "#000000"
   }).setRadius(radius);
-  circle.bindTooltip(idForMarkers.toString());
+  circle.bindTooltip(props.idForMarkers.toString());
   circle.addTo(map);
 
   circle.on("pm:dragstart", (e) => {
@@ -47,7 +44,7 @@ const CreateCircleWithActionRadius = (
     });
   });
   circle.on("pm:dragend", () => {
-    hiddenMarkersByDraggingCircles.set(
+    props.hiddenMarkersByDraggingCircles.set(
       circle.getTooltip()!.getContent()!.toString(),
       [circle.getLatLng().lat, circle.getLatLng().lng]
     );
@@ -56,5 +53,3 @@ const CreateCircleWithActionRadius = (
     circle.setStyle({ fillColor: "#ffffff", color: "#ffffff" });
   });
 };
-
-export default CreateCircleWithActionRadius;

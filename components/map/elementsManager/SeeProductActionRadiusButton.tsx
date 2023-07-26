@@ -4,7 +4,7 @@ import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import { useMap } from "react-leaflet";
 import * as L from "leaflet";
 import { Dispatch, SetStateAction } from "react";
-import AreThereAnyMarkers from "../utils/AreThereAnyMarkers";
+import { areThereAnyMarkers } from "../utils/areThereAnyMarkers";
 
 type Dispatcher = Dispatch<SetStateAction<boolean>>;
 
@@ -34,7 +34,7 @@ const SeeProductActionRadiusButton = ({
       // S'activa el radi
       if (!actionRadius) {
         setActionRadius(true); //this.actionRadius = true;
-        if (AreThereAnyMarkers(layers)) {
+        if (areThereAnyMarkers(layers)) {
           layers.forEach((layer: L.Layer) => {
             if (layer instanceof L.Marker) {
               const area: number = (1 / productDensity) * 10000;
