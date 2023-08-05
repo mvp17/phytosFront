@@ -40,9 +40,9 @@ const ClientsPage = () => {
   const [editForm] = useForm();
 
   const allClients = useClientStore((state) => state.clientsData);
-  const callGetApi = useClientStore((state) => state.getApi);
-  const callPostApi = useClientStore((state) => state.createClientApi);
-  const callPutApi = useClientStore((state) => state.updateClientApi);
+  const callGetApi = useClientStore((state) => state.getAll);
+  const callPostApi = useClientStore((state) => state.createClient);
+  const callPutApi = useClientStore((state) => state.updateClient);
   const callDeleteApi = useClientStore((state) => state.deleteClientApi);
 
   const { data: session, status } = useSession({
@@ -128,6 +128,7 @@ const ClientsPage = () => {
   return (
     <Fragment>
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={createClientFormVisible}
         title="Create Client"
@@ -163,6 +164,7 @@ const ClientsPage = () => {
       </Modal>
 
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={editClientFormVisible}
         title="Edit Client"
@@ -205,7 +207,7 @@ const ClientsPage = () => {
         <Col span={23} />
         <Col span={1}>
           <Button
-            type={"primary"}
+            type="primary" ghost
             shape="circle"
             icon={<PlusOutlined />}
             onClick={showCreateModal}
@@ -272,6 +274,7 @@ const ClientsPage = () => {
                         />
                       </Tooltip>
                       <Popconfirm
+                        okButtonProps={{ style: { backgroundColor: 'red' } }}
                         title="Are you sure？"
                         onConfirm={() => {
                           deleteClient(value._id);

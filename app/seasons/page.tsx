@@ -48,10 +48,10 @@ const SeasonsPage = () => {
   const [editForm] = useForm();
 
   const allSeasons = useSeasonStore((state) => state.seasonsData);
-  const callGetApi = useSeasonStore((state) => state.getApi);
-  const callPostApi = useSeasonStore((state) => state.createSeasonApi);
-  const callPutApi = useSeasonStore((state) => state.updateSeasonApi);
-  const callDeleteApi = useSeasonStore((state) => state.deleteSeasonApi);
+  const callGetApi = useSeasonStore((state) => state.getAll);
+  const callPostApi = useSeasonStore((state) => state.createSeason);
+  const callPutApi = useSeasonStore((state) => state.updateSeason);
+  const callDeleteApi = useSeasonStore((state) => state.deleteSeason);
 
   useEffect(() => {
     if (allSeasons.length === 0) {
@@ -125,6 +125,7 @@ const SeasonsPage = () => {
   return (
     <Fragment>
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={createSeasonFormVisible}
         title="Create Season"
@@ -160,6 +161,7 @@ const SeasonsPage = () => {
       </Modal>
 
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={editSeasonFormVisible}
         title="Edit Season"
@@ -202,7 +204,7 @@ const SeasonsPage = () => {
         <Col span={23} />
         <Col span={1}>
           <Button
-            type={"primary"}
+            type="primary" ghost
             shape="circle"
             icon={<PlusOutlined />}
             onClick={showCreateModal}
@@ -270,6 +272,7 @@ const SeasonsPage = () => {
                         />
                       </Tooltip>
                       <Popconfirm
+                        okButtonProps={{ style: { backgroundColor: 'red' } }}
                         title="Are you sure？"
                         onConfirm={() => {
                           deleteSeason(value._id);

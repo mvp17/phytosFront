@@ -10,10 +10,10 @@ const baseURL: string = environment.urlConf + "/products";
 
 interface ProductsState {
   productsData: IProduct[];
-  getApi: () => void;
-  createProductApi: (product: IProduct, token:string) => Promise<void>;
-  updateProductApi: (product: IProduct, ref: string, token:string) => Promise<void>;
-  deleteProductApi: (id: string, token:string) => Promise<void>;
+  getAll: () => void;
+  createProduct: (product: IProduct, token:string) => Promise<void>;
+  updateProduct: (product: IProduct, ref: string, token:string) => Promise<void>;
+  deleteProduct: (id: string, token:string) => Promise<void>;
 }
 
 /*
@@ -32,7 +32,7 @@ export const useProductStore = create<ProductsState>()(
   immer(
     devtools((set) => ({
       productsData: [],
-      getApi: async () => {
+      getAll: async () => {
         const defaultOptions = {
           baseURL,
         };
@@ -53,7 +53,7 @@ export const useProductStore = create<ProductsState>()(
         });
       },
 
-      createProductApi: async (product: IProduct, token:string) => {
+      createProduct: async (product: IProduct, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -70,7 +70,7 @@ export const useProductStore = create<ProductsState>()(
         });
       },
 
-      updateProductApi: async (product: IProduct, id: string, token:string) => {
+      updateProduct: async (product: IProduct, id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -91,7 +91,7 @@ export const useProductStore = create<ProductsState>()(
         });
       },
 
-      deleteProductApi: async (id: string, token:string) => {
+      deleteProduct: async (id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`

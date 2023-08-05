@@ -16,6 +16,7 @@ import {
   Select,
   Tag
 } from "antd";
+import { SiOpenstreetmap } from "react-icons/si";
 import type {SelectProps} from "antd";
 import {
   SearchOutlined,
@@ -34,6 +35,7 @@ import { useClientStore } from "../clients/ClientsStore";
 import { usePersonStore } from "../persons/PersonsStore";
 import { useProductStore } from "../products/ProductsStore";
 import { IPerson } from "../persons/Person";
+import { useRouter } from 'next/navigation';
 
 const { Column } = Table;
 
@@ -44,7 +46,7 @@ const InstallationsPage = () => {
       redirect('/api/auth/signin?callbackUrl=/installations');
     }
   });
-
+  const router = useRouter();
   const [dataSourceLoading, setDataSourceLoading] = useState(false);
   const [
     createInstallationFormVisible,
@@ -63,28 +65,28 @@ const InstallationsPage = () => {
   const allInstallations = useInstallationStore(
     (state) => state.installationsData
   );
-  const getInstallationsApi = useInstallationStore((state) => state.getApi);
+  const getInstallationsApi = useInstallationStore((state) => state.getAll);
   const postInstallationApi = useInstallationStore(
-    (state) => state.createInstallationApi
+    (state) => state.createInstallation
   );
   const putInstallationApi = useInstallationStore(
-    (state) => state.updateInstallationApi
+    (state) => state.updateInstallation
   );
   const deleteInstallationApi = useInstallationStore(
-    (state) => state.deleteInstallationApi
+    (state) => state.deleteInstallation
   );
 
   const allSeasons = useSeasonStore((state) => state.seasonsData);
-  const getSeasonsApi = useSeasonStore((state) => state.getApi);
+  const getSeasonsApi = useSeasonStore((state) => state.getAll);
 
   const allClients = useClientStore((state) => state.clientsData);
-  const getClientsApi = useClientStore((state) => state.getApi);
+  const getClientsApi = useClientStore((state) => state.getAll);
 
   const allPersons = usePersonStore((state) => state.personsData);
-  const getPersonsApi = usePersonStore((state) => state.getApi);
+  const getPersonsApi = usePersonStore((state) => state.getAll);
 
   const allProducts = useProductStore((state) => state.productsData);
-  const getProductsApi = useProductStore((state) => state.getApi);
+  const getProductsApi = useProductStore((state) => state.getAll);
 
   const seasons: SelectProps['options'] = 
     allSeasons.map((season) => {
@@ -236,6 +238,7 @@ const InstallationsPage = () => {
   return (
     <Fragment>
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={createInstallationFormVisible}
         title="Create Installation"
@@ -399,6 +402,7 @@ const InstallationsPage = () => {
       </Modal>
 
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={editInstallationFormVisible}
         title="Edit Client"
@@ -564,7 +568,7 @@ const InstallationsPage = () => {
         <Col span={23} />
         <Col span={1}>
           <Button
-            type={"primary"}
+            type="primary" ghost
             shape="circle"
             icon={<PlusOutlined />}
             onClick={showCreateModal}
@@ -590,6 +594,19 @@ const InstallationsPage = () => {
               title="Name"
               dataIndex="name"
               key="name"
+              sortDirections={["descend", "ascend"]}
+              sorter={{
+                compare: (a: IInstallation, b: IInstallation) =>
+                  alphabeticalSort(a._id, b._id),
+                multiple: 3
+              }}
+              filterIcon={() => <SearchOutlined />}
+            />
+            <Column
+              align={"center"}
+              title="Product name"
+              dataIndex="productName"
+              key="productName"
               sortDirections={["descend", "ascend"]}
               sorter={{
                 compare: (a: IInstallation, b: IInstallation) =>
@@ -787,7 +804,7 @@ const InstallationsPage = () => {
               render={(value: IInstallation, record: IInstallation) => {
                 return (
                   <Fragment>
-                    <Space size={"large"}>
+                    <Space>
                       <Tooltip title="Edit">
                         <Button
                           shape="circle"
@@ -800,6 +817,7 @@ const InstallationsPage = () => {
                         />
                       </Tooltip>
                       <Popconfirm
+                        okButtonProps={{ style: { backgroundColor: 'red' } }}
                         title="Are you sure？"
                         onConfirm={() => {
                           deleteInstallation(value._id);
@@ -810,6 +828,15 @@ const InstallationsPage = () => {
                       >
                         <Button shape="circle" icon={<DeleteOutlined />} />
                       </Popconfirm>
+                      <Tooltip title="Map">
+                        <Button
+                          shape="circle"
+                          icon={<SiOpenstreetmap />}
+                          onClick={() => {
+                            router.push(`/map?installationId=${record._id}`)
+                          }}
+                        />
+                      </Tooltip>
                     </Space>
                   </Fragment>
                 );

@@ -50,13 +50,13 @@ const PersonsPage = () => {
   const [editForm] = useForm();
 
   const allPersons = usePersonStore((state) => state.personsData);
-  const getPersonsApi = usePersonStore((state) => state.getApi);
-  const postPersonApi = usePersonStore((state) => state.createPersonApi);
-  const putPersonApi = usePersonStore((state) => state.updatePersonApi);
-  const deletePersonApi = usePersonStore((state) => state.deletePersonApi);
+  const getPersonsApi = usePersonStore((state) => state.getAll);
+  const postPersonApi = usePersonStore((state) => state.createPerson);
+  const putPersonApi = usePersonStore((state) => state.updatePerson);
+  const deletePersonApi = usePersonStore((state) => state.deletePerson);
 
   const allClients = useClientStore((state) => state.clientsData);
-  const getClientsApi = useClientStore((state) => state.getApi);
+  const getClientsApi = useClientStore((state) => state.getAll);
 
   const clients: SelectProps['options'] = 
     allClients.map((client) => {
@@ -150,6 +150,7 @@ const PersonsPage = () => {
   return (
     <Fragment>
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={createPersonFormVisible}
         title="Create Person"
@@ -204,6 +205,7 @@ const PersonsPage = () => {
       </Modal>
 
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={editPersonFormVisible}
         title="Edit Person"
@@ -265,7 +267,7 @@ const PersonsPage = () => {
         <Col span={23} />
         <Col span={1}>
           <Button
-            type={"primary"}
+            type="primary" ghost
             shape="circle"
             icon={<PlusOutlined />}
             onClick={showCreateModal}
@@ -358,6 +360,7 @@ const PersonsPage = () => {
                         />
                       </Tooltip>
                       <Popconfirm
+                        okButtonProps={{ style: { backgroundColor: 'red' } }}
                         title="Are you sure？"
                         onConfirm={() => {
                           deletePerson(value._id);

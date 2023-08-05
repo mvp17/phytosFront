@@ -11,14 +11,16 @@ const baseURL: string = environment.urlConf + "/installations";
 
 interface InstallationsState {
   installationsData: IInstallation[];
-  getApi: () => void;
-  createInstallationApi: (installation: IInstallation, token:string) => Promise<void>;
-  updateInstallationApi: (
+  currentInstallationForMap: IInstallation;
+  getAll: () => void;
+  getInstallation: (installationId: string) => void;
+  createInstallation: (installation: IInstallation, token:string) => Promise<void>;
+  updateInstallation: (
     installation: IInstallation,
     ref: string,
     token:string
   ) => Promise<void>;
-  deleteInstallationApi: (id: string, token:string) => Promise<void>;
+  deleteInstallation: (id: string, token:string) => Promise<void>;
 }
 
 /*
@@ -37,7 +39,28 @@ export const useInstallationStore = create<InstallationsState>()(
   immer(
     devtools((set) => ({
       installationsData: [],
-      getApi: async () => {
+      currentInstallationForMap: {
+        _id: "",
+        name: "",
+        productName: "",
+        seasonYear: 0,
+        clientName: "",
+        plantationName: "",
+        plotName: "",
+        installationDate: "",
+        activationDate: "",
+        province: "",
+        municipality: "",
+        features: "",
+        projectionObservations: "",
+        installationObservations: "",
+        revisionObservations: "",
+        retreatObservations: "",
+        contacts: [],
+        key: "",
+        index: 0
+    },
+      getAll: async () => {
         const defaultOptions = {
           baseURL,
         };
@@ -60,7 +83,23 @@ export const useInstallationStore = create<InstallationsState>()(
         });
       },
 
-      createInstallationApi: async (installation: IInstallation, token:string) => {
+      getInstallation: async (installationId: string) => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+        const apiResponse = await instance.get(baseURL + `/${installationId}`);
+        set((state) => {
+          state.currentInstallationForMap = apiResponse.data;
+        })
+      },
+
+      createInstallation: async (installation: IInstallation, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -79,7 +118,7 @@ export const useInstallationStore = create<InstallationsState>()(
         });
       },
 
-      updateInstallationApi: async (
+      updateInstallation: async (
         installation: IInstallation,
         id: string,
         token:string
@@ -106,7 +145,7 @@ export const useInstallationStore = create<InstallationsState>()(
         });
       },
 
-      deleteInstallationApi: async (id: string, token: string) => {
+      deleteInstallation: async (id: string, token: string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`

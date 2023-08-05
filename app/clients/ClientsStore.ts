@@ -10,9 +10,9 @@ const baseURL: string = environment.urlConf + "/clients";
 
 interface ClientsState {
   clientsData: IClient[];
-  getApi: () => void;
-  createClientApi: (client: IClient, token: string) => Promise<void>;
-  updateClientApi: (client: IClient, ref: string, token: string) => Promise<void>;
+  getAll: () => void;
+  createClient: (client: IClient, token: string) => Promise<void>;
+  updateClient: (client: IClient, ref: string, token: string) => Promise<void>;
   deleteClientApi: (id: string, token: string) => Promise<void>;
 }
 
@@ -32,7 +32,7 @@ export const useClientStore = create<ClientsState>()(
   immer(
     devtools((set) => ({
       clientsData: [],
-      getApi: async () => {
+      getAll: async () => {
         const defaultOptions = {
           baseURL,
         };
@@ -55,7 +55,7 @@ export const useClientStore = create<ClientsState>()(
         });
       },
 
-      createClientApi: async (client: IClient, token: string) => {
+      createClient: async (client: IClient, token: string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -73,7 +73,7 @@ export const useClientStore = create<ClientsState>()(
         });
       },
 
-      updateClientApi: async (client: IClient, id: string, token: string) => {
+      updateClient: async (client: IClient, id: string, token: string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`

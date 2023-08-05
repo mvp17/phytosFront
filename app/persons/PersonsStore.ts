@@ -10,10 +10,10 @@ const baseURL: string = environment.urlConf + "/persons";
 
 interface PersonsState {
   personsData: IPerson[];
-  getApi: () => void;
-  createPersonApi: (person: IPerson, token:string) => Promise<void>;
-  updatePersonApi: (person: IPerson, ref: string, token:string) => Promise<void>;
-  deletePersonApi: (id: string, token:string) => Promise<void>;
+  getAll: () => void;
+  createPerson: (person: IPerson, token:string) => Promise<void>;
+  updatePerson: (person: IPerson, ref: string, token:string) => Promise<void>;
+  deletePerson: (id: string, token:string) => Promise<void>;
 }
 
 /*
@@ -32,7 +32,7 @@ export const usePersonStore = create<PersonsState>()(
   immer(
     devtools((set) => ({
       personsData: [],
-      getApi: async () => {
+      getAll: async () => {
         const defaultOptions = {
           baseURL,
         };
@@ -53,7 +53,7 @@ export const usePersonStore = create<PersonsState>()(
         });
       },
 
-      createPersonApi: async (person: IPerson, token:string) => {
+      createPerson: async (person: IPerson, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -70,7 +70,7 @@ export const usePersonStore = create<PersonsState>()(
         });
       },
 
-      updatePersonApi: async (person: IPerson, id: string, token:string) => {
+      updatePerson: async (person: IPerson, id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -91,7 +91,7 @@ export const usePersonStore = create<PersonsState>()(
         });
       },
 
-      deletePersonApi: async (id: string, token:string) => {
+      deletePerson: async (id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`

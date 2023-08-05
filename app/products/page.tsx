@@ -50,10 +50,10 @@ const ProductsPage = () => {
   const [editForm] = useForm();
 
   const allProducts = useProductStore((state) => state.productsData);
-  const callGetApi = useProductStore((state) => state.getApi);
-  const callPostApi = useProductStore((state) => state.createProductApi);
-  const callPutApi = useProductStore((state) => state.updateProductApi);
-  const callDeleteApi = useProductStore((state) => state.deleteProductApi);
+  const callGetApi = useProductStore((state) => state.getAll);
+  const callPostApi = useProductStore((state) => state.createProduct);
+  const callPutApi = useProductStore((state) => state.updateProduct);
+  const callDeleteApi = useProductStore((state) => state.deleteProduct);
 
   useEffect(() => {
     if (allProducts.length === 0) {
@@ -127,6 +127,7 @@ const ProductsPage = () => {
   return (
     <Fragment>
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={createProductFormVisible}
         title="Create Product"
@@ -181,6 +182,7 @@ const ProductsPage = () => {
       </Modal>
 
       <Modal
+        okButtonProps={{ style: { backgroundColor: 'green' } }}
         width={"100vh"}
         open={editProductFormVisible}
         title="Edit Product"
@@ -242,7 +244,7 @@ const ProductsPage = () => {
         <Col span={23} />
         <Col span={1}>
           <Button
-            type={"primary"}
+            type="primary" ghost
             shape="circle"
             icon={<PlusOutlined />}
             onClick={showCreateModal}
@@ -322,6 +324,7 @@ const ProductsPage = () => {
                         />
                       </Tooltip>
                       <Popconfirm
+                        okButtonProps={{ style: { backgroundColor: 'red' } }}
                         title="Are you sure？"
                         onConfirm={() => {
                           deleteProduct(value._id);

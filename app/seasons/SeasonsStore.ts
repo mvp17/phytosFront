@@ -10,10 +10,10 @@ const baseURL: string = environment.urlConf + "/seasons";
 
 interface SeasonsState {
   seasonsData: ISeason[];
-  getApi: () => void;
-  createSeasonApi: (season: ISeason, token:string) => Promise<void>;
-  updateSeasonApi: (season: ISeason, ref: string, token:string) => Promise<void>;
-  deleteSeasonApi: (id: string, token:string) => Promise<void>;
+  getAll: () => void;
+  createSeason: (season: ISeason, token:string) => Promise<void>;
+  updateSeason: (season: ISeason, ref: string, token:string) => Promise<void>;
+  deleteSeason: (id: string, token:string) => Promise<void>;
 }
 
 /*
@@ -32,7 +32,7 @@ export const useSeasonStore = create<SeasonsState>()(
   immer(
     devtools((set) => ({
       seasonsData: [],
-      getApi: async () => {
+      getAll: async () => {
         const defaultOptions = {
           baseURL,
         };
@@ -53,7 +53,7 @@ export const useSeasonStore = create<SeasonsState>()(
         });
       },
 
-      createSeasonApi: async (season: ISeason, token:string) => {
+      createSeason: async (season: ISeason, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -70,7 +70,7 @@ export const useSeasonStore = create<SeasonsState>()(
         });
       },
 
-      updateSeasonApi: async (season: ISeason, id: string, token:string) => {
+      updateSeason: async (season: ISeason, id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
@@ -91,7 +91,7 @@ export const useSeasonStore = create<SeasonsState>()(
         });
       },
 
-      deleteSeasonApi: async (id: string, token:string) => {
+      deleteSeason: async (id: string, token:string) => {
         let reqInstance = axios.create({
           headers: {
             Authorization: `Bearer ${token}`
