@@ -17,6 +17,7 @@
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.4",
     "@react-pdf/renderer": "^3.1.12",
+    "@tremor/react": "^3.6.0",
     "@turf/turf": "^6.5.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/leaflet": "^1.9.3",

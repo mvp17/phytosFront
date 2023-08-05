@@ -6,6 +6,7 @@ import Toolbar from "./Toolbar";
 import { IProduct } from "@/app/products/Product";
 import { useProductStore } from "@/app/products/ProductsStore";
 import { IInstallation } from "@/app/installations/Installation";
+import { AccordionList, Accordion, AccordionHeader, AccordionBody } from "@tremor/react";
 
 
 interface IProps {
@@ -27,6 +28,7 @@ const MapComponent = ({ installation }: IProps) => {
     const [productColor, setProductColor] = useState("");
 
     const allProducts = useProductStore((state) => state.productsData);
+    const getAllProducts = useProductStore((state) => state.getAll);
     const polygonColor = "#FFFB89";
   
     const setProductInfoByProductNameFrom = (products: IProduct[]) => {
@@ -38,17 +40,21 @@ const MapComponent = ({ installation }: IProps) => {
             setProductColor(product.color);
           }
         });
+        /*
         if (productDensity === 0)
           alert(
             "No hi ha cap producte registrat amb el nom de producte donat. " +
               "Pertant, no hi ha densitat per hectarea associada."
           );
+        */
       }
     };
   
     useEffect(() => {
-      //setProductInfoByProductNameFrom(allProducts);
-    });
+      getAllProducts();
+      setProductInfoByProductNameFrom(allProducts);
+      console.log(productDensity, productColor)
+    }, [productDensity, productColor]);
   
     const geomanProps = {
       polygonColor: polygonColor,
@@ -103,6 +109,29 @@ const MapComponent = ({ installation }: IProps) => {
           <Layers />
           <Toolbar props={toolbarProps} />
         </MapContainer>
+        <AccordionList className="max-w-md mx-auto">
+          <Accordion>
+            <AccordionHeader>Accordion 1</AccordionHeader>
+            <AccordionBody>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
+              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
+            </AccordionBody>
+          </Accordion>
+          <Accordion>
+            <AccordionHeader>Accordion 2</AccordionHeader>
+            <AccordionBody>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
+              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
+            </AccordionBody>
+          </Accordion>
+          <Accordion>
+            <AccordionHeader>Accordion 3</AccordionHeader>
+            <AccordionBody>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
+              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
+            </AccordionBody>
+          </Accordion>
+        </AccordionList>
       </Fragment>
     );
   };

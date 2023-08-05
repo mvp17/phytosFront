@@ -7,7 +7,6 @@ import { AiOutlineHome,
   AiOutlineBug,
   AiOutlineFunnelPlot
 } from "react-icons/ai";
-import { SiOpenstreetmap } from "react-icons/si";
 
 const links = [
   {
@@ -39,11 +38,6 @@ const links = [
     label: 'Installations',
     route: '/installations',
     icon: <AiOutlineFunnelPlot />
-  },
-  {
-    label: 'Map',
-    route: '/map',
-    icon: <SiOpenstreetmap />
   }
 ];
 

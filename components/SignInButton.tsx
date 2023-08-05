@@ -7,8 +7,7 @@ import { Menu, Transition } from '@headlessui/react'
 import clsx from 'clsx'
 
 import {
-  ArrowRightOnRectangleIcon,
-  Cog8ToothIcon
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/solid'
 
 const SignInButton = () => {
