@@ -18,6 +18,7 @@ import { AccordionList,
          Badge
         } from "@tremor/react";
 import SearchIcon from '@mui/icons-material/Search';
+import * as L from "leaflet";
 
 
 interface IProps {
@@ -26,6 +27,7 @@ interface IProps {
 
 const MapComponent = ({ installation }: IProps) => {
     const [idForMarkers, setIdForMarkers] = useState(0);
+    const [map, setMap] = useState(null);
     const [resultGeoSearch, setResultGeoSearch] = useState<"ok" | "ko" | null>(null);
     const [actionRadius, setActionRadius] = useState(false);
     const [totalAreaPolygons, setTotalAreaPolygons] = useState(0);
@@ -120,9 +122,11 @@ const MapComponent = ({ installation }: IProps) => {
       searchGeoPositionOnMap(Number(lat), Number(lon))
       form.reset()
     }
-
     const searchGeoPositionOnMap = (lat: number, lon: number) => {
-      console.log(lat, lon)
+      const coordinates = L.latLng(lat, lon);
+       // @ts-ignore
+      map.flyTo(coordinates);
+      //console.log(lat, lon)
     }
   
     return (
@@ -131,6 +135,8 @@ const MapComponent = ({ installation }: IProps) => {
           center={[40.463667, -3.74922]}
           zoom={7}
           scrollWheelZoom={false}
+           // @ts-ignore
+          ref={setMap}
           style={{
             height: "500px",
             backgroundColor: "white",
@@ -167,9 +173,9 @@ const MapComponent = ({ installation }: IProps) => {
                       <Button size="lg" type="submit" style={{ marginTop: "16px" }}>Confirm search</Button>
                       <span>
                         {resultGeoSearch === "ok" && (
-                          <Badge>Correctly saved</Badge>
+                          <Badge color="green" style={{ marginLeft: "16px" }}>Correctly saved</Badge>
                         )}
-                        {resultGeoSearch === "ko" && <Badge>Fields error</Badge>}
+                        {resultGeoSearch === "ko" && <Badge color="red" style={{ marginLeft: "16px" }}>Fields error</Badge>}
                       </span>
                     </div>
                   </form>

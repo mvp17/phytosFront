@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.11.0",
     "@geoman-io/leaflet-geoman-free": "^2.14.2",
     "@headlessui/react": "^1.7.15",
+    "@headlessui/tailwindcss": "^0.2.0",
     "@heroicons/react": "^2.0.18",
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.4",
