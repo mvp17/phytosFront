@@ -6,7 +6,18 @@ import Toolbar from "./Toolbar";
 import { IProduct } from "@/app/products/Product";
 import { useProductStore } from "@/app/products/ProductsStore";
 import { IInstallation } from "@/app/installations/Installation";
-import { AccordionList, Accordion, AccordionHeader, AccordionBody } from "@tremor/react";
+import { AccordionList, 
+         Accordion, 
+         AccordionHeader, 
+         AccordionBody, 
+         Grid, 
+         Button,
+         Metric, 
+         Text,
+         NumberInput,
+         Badge
+        } from "@tremor/react";
+import SearchIcon from '@mui/icons-material/Search';
 
 
 interface IProps {
@@ -15,9 +26,10 @@ interface IProps {
 
 const MapComponent = ({ installation }: IProps) => {
     const [idForMarkers, setIdForMarkers] = useState(0);
+    const [resultGeoSearch, setResultGeoSearch] = useState<"ok" | "ko" | null>(null);
     const [actionRadius, setActionRadius] = useState(false);
     const [totalAreaPolygons, setTotalAreaPolygons] = useState(0);
-    const [totalAreaPolygonsString, setTotalAreaPolygonsString] = useState("");
+    const [totalAreaPolygonsString, setTotalAreaPolygonsString] = useState("0");
     const [totalProducts, setTotalProducts] = useState(0);
     const [markedProducts, setMarkedProducts] = useState(0);
     const hiddenMarkersByDraggingCircles: Map<string, number[]> = new Map<
@@ -53,7 +65,6 @@ const MapComponent = ({ installation }: IProps) => {
     useEffect(() => {
       getAllProducts();
       setProductInfoByProductNameFrom(allProducts);
-      console.log(productDensity, productColor)
     }, [productDensity, productColor]);
   
     const geomanProps = {
@@ -91,6 +102,28 @@ const MapComponent = ({ installation }: IProps) => {
       setTotalProducts: setTotalProducts,
       setMarkedProducts: setMarkedProducts
     };
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setResultGeoSearch(null);
+      
+      const form = event.target as HTMLFormElement;
+      const formData = new FormData(form);
+
+      const lat = formData.get("lat") as string;
+      const lon = formData.get("lon") as string;
+      
+      if (!lat || !lon) {
+        return setResultGeoSearch("ko")
+      }
+      setResultGeoSearch("ok")
+      searchGeoPositionOnMap(Number(lat), Number(lon))
+      form.reset()
+    }
+
+    const searchGeoPositionOnMap = (lat: number, lon: number) => {
+      console.log(lat, lon)
+    }
   
     return (
       <Fragment>
@@ -109,29 +142,50 @@ const MapComponent = ({ installation }: IProps) => {
           <Layers />
           <Toolbar props={toolbarProps} />
         </MapContainer>
-        <AccordionList className="max-w-md mx-auto">
-          <Accordion>
-            <AccordionHeader>Accordion 1</AccordionHeader>
-            <AccordionBody>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
-              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
-            </AccordionBody>
-          </Accordion>
-          <Accordion>
-            <AccordionHeader>Accordion 2</AccordionHeader>
-            <AccordionBody>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
-              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
-            </AccordionBody>
-          </Accordion>
-          <Accordion>
-            <AccordionHeader>Accordion 3</AccordionHeader>
-            <AccordionBody>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
-              congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
-            </AccordionBody>
-          </Accordion>
-        </AccordionList>
+        <Grid numItems={1} numItemsSm={3} numItemsLg={3}>
+          <AccordionList>
+            <Accordion defaultOpen={true}>
+              <AccordionHeader>Map Info</AccordionHeader>
+                <AccordionBody>
+                  <Text>Total area</Text>
+                  <Metric>{totalAreaPolygonsString} ha</Metric>
+                  <Text>Total {installation.productName}s</Text>
+                  <Metric>{totalProducts}</Metric>
+                  <Text>Total {installation.productName}s marked on the map</Text>
+                  <Metric>{markedProducts}</Metric>
+                </AccordionBody>
+            </Accordion>
+          </AccordionList>
+          <AccordionList>
+            <Accordion>
+              <AccordionHeader>Geographic Search</AccordionHeader>
+                <AccordionBody>
+                  <form onSubmit={handleSubmit} className="">
+                    <NumberInput icon={SearchIcon} name="lat" placeholder="Lat (xx,xxxxx)" />
+                    <NumberInput icon={SearchIcon} name="lon" placeholder="Lon (xx,xxxxx)" />
+                    <div>
+                      <Button size="lg" type="submit" style={{ marginTop: "16px" }}>Confirm search</Button>
+                      <span>
+                        {resultGeoSearch === "ok" && (
+                          <Badge>Correctly saved</Badge>
+                        )}
+                        {resultGeoSearch === "ko" && <Badge>Fields error</Badge>}
+                      </span>
+                    </div>
+                  </form>
+                </AccordionBody>
+            </Accordion>
+          </AccordionList>
+          <AccordionList>
+            <Accordion>
+              <AccordionHeader>Cadastre Search</AccordionHeader>
+                <AccordionBody>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
+                  congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
+                </AccordionBody>
+            </Accordion>
+          </AccordionList>
+        </Grid>
       </Fragment>
     );
   };
