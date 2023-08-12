@@ -5,6 +5,7 @@ import { Layers } from "./Layers";
 import Toolbar from "./Toolbar";
 import { IProduct } from "@/app/products/Product";
 import { useProductStore } from "@/app/products/ProductsStore";
+import { useCadastreStore } from "./stores/CadastreStore";
 import { IInstallation } from "@/app/installations/Installation";
 import { AccordionList, 
          Accordion, 
@@ -18,7 +19,17 @@ import { AccordionList,
          Badge
         } from "@tremor/react";
 import SearchIcon from '@mui/icons-material/Search';
+import { message } from "antd";
 import * as L from "leaflet";
+import {
+  Select,
+  SelectItem,
+} from "@tremor/react";
+import { IProvXML } from "./interfaces/provinceXML";
+import { IMunXML } from "./interfaces/municipalityXML";
+import { environment } from "@/environment";
+import axios from "axios";
+import { getSession } from "next-auth/react";
 
 
 interface IProps {
@@ -29,6 +40,9 @@ const MapComponent = ({ installation }: IProps) => {
     const [idForMarkers, setIdForMarkers] = useState(0);
     const [map, setMap] = useState(null);
     const [resultGeoSearch, setResultGeoSearch] = useState<"ok" | "ko" | null>(null);
+    const [resultCadastreSearch, setResultCadastreSearch] = useState<"ok" | "ko" | null>(null);
+    const [selectedProvince, setSelectedProvince] = useState("");
+    const [selectedMunicipality, setSelectedMunicipality] = useState("");
     const [actionRadius, setActionRadius] = useState(false);
     const [totalAreaPolygons, setTotalAreaPolygons] = useState(0);
     const [totalAreaPolygonsString, setTotalAreaPolygonsString] = useState("0");
@@ -43,6 +57,14 @@ const MapComponent = ({ installation }: IProps) => {
 
     const allProducts = useProductStore((state) => state.productsData);
     const getAllProducts = useProductStore((state) => state.getAll);
+    const allProvinces = useCadastreStore((state) => state.provinces);
+    const getCadastreProvinces = useCadastreStore((state) => state.getCadastreProvinces);
+    const allMunicipalities = useCadastreStore((state) => state.municipalities);
+    const getCadastreMunicipalities = useCadastreStore((state) => state.getCadastreMunicipalities);
+    const resetMunicipalities = useCadastreStore((state) => state.resetMunicipalities);
+    //const responseNonProtectedCadastre = useCadastreStore((state) => state.responseNonProtectedCadastre);
+    //const getNonProtectedCadastreData = useCadastreStore((state) => state.getNonProtectedCadastreData);
+
     const polygonColor = "#FFFB89";
   
     const setProductInfoByProductNameFrom = (products: IProduct[]) => {
@@ -67,7 +89,8 @@ const MapComponent = ({ installation }: IProps) => {
     useEffect(() => {
       getAllProducts();
       setProductInfoByProductNameFrom(allProducts);
-    }, [productDensity, productColor]);
+      getCadastreProvinces();
+    }, [productDensity, productColor, selectedProvince]);
   
     const geomanProps = {
       polygonColor: polygonColor,
@@ -105,7 +128,7 @@ const MapComponent = ({ installation }: IProps) => {
       setMarkedProducts: setMarkedProducts
     };
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleGeographicSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setResultGeoSearch(null);
       
@@ -122,11 +145,82 @@ const MapComponent = ({ installation }: IProps) => {
       searchGeoPositionOnMap(Number(lat), Number(lon))
       form.reset()
     }
+
     const searchGeoPositionOnMap = (lat: number, lon: number) => {
       const coordinates = L.latLng(lat, lon);
-       // @ts-ignore
+      // @ts-ignore
       map.flyTo(coordinates);
-      //console.log(lat, lon)
+    }
+
+    const handleCadastreSearchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+      const baseURL: string = environment.urlConf + "/map";
+      event.preventDefault();
+      setResultCadastreSearch(null);
+      const form = event.target as HTMLFormElement;
+      const formData = new FormData(form);
+      const area = formData.get("area") as string;
+      const plot = formData.get("plot") as string;
+      let cpine = "";
+      let np = "";
+      let cmc = "";
+      let cm = "";
+      let nm = "";
+
+      allProvinces.map((province) => {
+        if (selectedProvince === province.cpine){
+          cpine = province.cpine;
+          np = province.np;
+        }
+      });
+      allMunicipalities.map((municipality) => {
+        if (selectedMunicipality === municipality.nm){
+          cmc = municipality.locat.cmc;
+          cm = municipality.loine.cm;
+          nm = municipality.nm;
+        }
+      });
+
+      if (cpine !== "" && np !== "" && cmc !== "" && cm !== "" && nm !== ""){
+          const defaultOptions = {
+              baseURL,
+          };
+          const instance = axios.create(defaultOptions);
+          instance.interceptors.request.use(async (request) => {
+            const session = await getSession();
+            if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+            return request;
+          });
+          const params = {
+            provinceCode: cpine,
+            province: np,
+            municipalityCode: cmc,
+            INEMunicipalityCode: cm,
+            municipality: nm,
+            area: area,
+            plot: plot
+          };
+          const apiResponse = await instance.get(baseURL + "/getNonProtectedCatastroData", { params })
+          const response = apiResponse.data;
+          const lat = response[1];
+          const lon = response[0];
+
+          const coordinates = L.latLng(Number(lat), Number(lon));
+          // It appears that 18 is the maximum zoom leaflet is able to show on the map.
+          // @ts-ignore
+          map.flyTo(coordinates, 18);
+      }
+      else
+          message.error("Error in getting cadastre params.");
+    }
+
+    const handleOnProvinceChange = (cpine: string) => {
+      setSelectedProvince(cpine)
+      resetMunicipalities();
+      getCadastreMunicipalities(cpine);
+    }
+
+    const handleOnMunicipalityChange = (nm: string) => {
+      setSelectedMunicipality(nm);
     }
   
     return (
@@ -161,12 +255,25 @@ const MapComponent = ({ installation }: IProps) => {
                   <Metric>{markedProducts}</Metric>
                 </AccordionBody>
             </Accordion>
+            <Accordion defaultOpen={true}>
+              <AccordionHeader>Installation Info</AccordionHeader>
+                <AccordionBody>
+                  <Text>Plantation</Text>
+                  <Metric>{installation.plantationName}</Metric>
+                  <Text>Plot</Text>
+                  <Metric>{installation.plotName}</Metric>
+                  <Text>Season</Text>
+                  <Metric>{installation.seasonYear}</Metric>
+                  <Text>Product</Text>
+                  <Metric>{installation.productName}</Metric>
+                </AccordionBody>
+            </Accordion>
           </AccordionList>
           <AccordionList>
             <Accordion>
               <AccordionHeader>Geographic Search</AccordionHeader>
                 <AccordionBody>
-                  <form onSubmit={handleSubmit} className="">
+                  <form onSubmit={handleGeographicSearchSubmit} className="">
                     <NumberInput icon={SearchIcon} name="lat" placeholder="Lat (xx,xxxxx)" />
                     <NumberInput icon={SearchIcon} name="lon" placeholder="Lon (xx,xxxxx)" />
                     <div>
@@ -181,13 +288,40 @@ const MapComponent = ({ installation }: IProps) => {
                   </form>
                 </AccordionBody>
             </Accordion>
-          </AccordionList>
-          <AccordionList>
             <Accordion>
               <AccordionHeader>Cadastre Search</AccordionHeader>
                 <AccordionBody>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempor lorem non est
-                  congue blandit. Praesent non lorem sodales, suscipit est sed, hendrerit dolor.
+                  <form onSubmit={handleCadastreSearchSubmit} className="">
+                    <Select placeholder="Select province" value={selectedProvince} onValueChange={handleOnProvinceChange}>
+                      {
+                        allProvinces.map(province => 
+                          <SelectItem key={province.cpine} value={province.cpine}>
+                            {province.np}
+                          </SelectItem>
+                        )
+                      }
+                    </Select>
+                    <Select placeholder="Select municipality" value={selectedMunicipality} onValueChange={handleOnMunicipalityChange}>
+                      {
+                        allMunicipalities.map(municipality => 
+                          <SelectItem key={municipality.nm} value={municipality.nm}>
+                            {municipality.nm}
+                          </SelectItem>
+                        )
+                      }
+                    </Select>
+                    <NumberInput name="area" placeholder="Area" />
+                    <NumberInput name="plot" placeholder="Plot" />
+                    <div>
+                      <Button size="lg" type="submit" style={{ marginTop: "16px" }}>Confirm search</Button>
+                      <span>
+                        {resultCadastreSearch === "ok" && (
+                          <Badge color="green" style={{ marginLeft: "16px" }}>Correctly saved</Badge>
+                        )}
+                        {resultCadastreSearch === "ko" && <Badge color="red" style={{ marginLeft: "16px" }}>Fields error</Badge>}
+                      </span>
+                    </div>
+                  </form>
                 </AccordionBody>
             </Accordion>
           </AccordionList>

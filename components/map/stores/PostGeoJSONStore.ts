@@ -3,8 +3,9 @@ import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "../../../environment";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/map";
+const baseURL: string = environment.urlConf + "/map";
 
 interface GeoJSONState {
   postMarkersApi: (markersGeoJSON: string) => Promise<void>;
@@ -28,37 +29,49 @@ export const usePostGeoJSONStore = create<GeoJSONState>()(
   immer(
     devtools(() => ({
       postMarkersApi: async (markersGeoJSON: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+            baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        await reqInstance.post(
-          `${URL}/saveMarkersGeoJSON`,
+        await instance.post(
+          `${baseURL}/saveMarkersGeoJSON`,
           JSON.parse(markersGeoJSON)
         );
       },
 
       postLinestringsApi: async (linestringsGeoJSON: string, id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+            baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        await reqInstance.post(
-          `${URL}/saveLineStringsGeoJSON/${id}`,
+        await instance.post(
+          `${baseURL}/saveLineStringsGeoJSON/${id}`,
           JSON.parse(linestringsGeoJSON)
         );
       },
 
       postPolygonsApi: async (polygonsGeoJSON: string, id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+            baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        await reqInstance.post(
-          `${URL}/savePolygonsGeoJSON/${id}`,
+        await instance.post(
+          `${baseURL}/savePolygonsGeoJSON/${id}`,
           JSON.parse(polygonsGeoJSON)
         );
       }

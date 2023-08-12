@@ -1,14 +1,14 @@
 import Control from "react-leaflet-custom-control";
 import { Stack } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
-import { SaveGeoJSONElementsButton } from "./elementsManager/SaveGeoJSONElementsButton";
-import { LoadGeoJSONElementsButton } from "./elementsManager/LoadGeoJSONElementsButton";
-import { CleanMapButton } from "./elementsManager/CleanMapButton";
-import { DeleteGeoJSONElementsButton } from "./elementsManager/DeleteGeoJSONElementsButton";
+import { SaveGeoJSONElementsButton } from "./geoElementsManager/SaveGeoJSONElementsButton";
+import { LoadGeoJSONElementsButton } from "./geoElementsManager/LoadGeoJSONElementsButton";
+import { CleanMapButton } from "./geoElementsManager/CleanMapButton";
+import { DeleteGeoJSONElementsButton } from "./geoElementsManager/DeleteGeoJSONElementsButton";
 import ExportMarkersGPXFileButton from "./filesManager/ExportMarkersGPXFileButton";
 import ImportMarkersGPXFileButton from "./filesManager/ImportMarkersGPXFileButton";
 import { DownloadReportButton } from "./filesManager/DownloadReportButton";
-import SeeProductActionRadiusButton from "./elementsManager/SeeProductActionRadiusButton";
+import SeeProductActionRadiusButton from "./geoElementsManager/SeeProductActionRadiusButton";
 import { IInstallation } from "@/app/installations/Installation";
 
 type DispatcherNumber = Dispatch<SetStateAction<number>>;

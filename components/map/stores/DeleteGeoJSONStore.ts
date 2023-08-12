@@ -3,8 +3,9 @@ import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import axios from "axios";
 import { environment } from "../../../environment";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/map";
+const baseURL: string = environment.urlConf + "/map";
 
 interface GeoJSONState {
   deleteGeoJSON: (id: string) => Promise<void>;
@@ -26,12 +27,16 @@ export const useDeleteGeoJSONStore = create<GeoJSONState>()(
   immer(
     devtools(() => ({
       deleteGeoJSON: async (id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+            baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        await reqInstance.delete(`${URL}/deleteGeoJSON/${id}`);
+        await instance.delete(`${baseURL}/deleteGeoJSON/${id}`);
       }
     }))
   )

@@ -6,8 +6,9 @@ import { IPolygonSchema } from "../interfaces/polygonSchema";
 import { ILineStringSchema } from "../interfaces/linestringSchema";
 import axios from "axios";
 import { environment } from "../../../environment";
+import { getSession } from 'next-auth/react';
 
-const URL: string = environment.urlConf + "/map";
+const baseURL: string = environment.urlConf + "/map";
 
 interface GeoJSONState {
   markersData: IMarkerSchema[];
@@ -37,13 +38,17 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
       polygonsData: [],
       linestringsData: [],
       getInstallationMarkersApi: async (id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
-        });
-        const apiResponse = await reqInstance.get(
-          `${URL}/openGeoJSONMarkers/${id}`
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        })
+        const apiResponse = await instance.get(
+          `${baseURL}/openGeoJSONMarkers/${id}`
         );
         set((state) => {
           state.markersData = apiResponse.data;
@@ -51,13 +56,17 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
       },
 
       getInstallationPolygonsApi: async (id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        const apiResponse = await reqInstance.get(
-          `${URL}/openGeoJSONPolygons/${id}`
+        const apiResponse = await instance.get(
+          `${baseURL}/openGeoJSONPolygons/${id}`
         );
         set((state) => {
           state.polygonsData = apiResponse.data;
@@ -65,13 +74,17 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
       },
 
       getInstallationLinestringsApi: async (id: string) => {
-        let reqInstance = axios.create({
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`
-          }
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
         });
-        const apiResponse = await reqInstance.get(
-          `${URL}/openGeoJSONLineStrings/${id}`
+        const apiResponse = await instance.get(
+          `${baseURL}/openGeoJSONLineStrings/${id}`
         );
         set((state) => {
           state.linestringsData = apiResponse.data;
