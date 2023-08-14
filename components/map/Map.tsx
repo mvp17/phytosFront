@@ -25,11 +25,6 @@ import {
   Select,
   SelectItem,
 } from "@tremor/react";
-import { IProvXML } from "./interfaces/provinceXML";
-import { IMunXML } from "./interfaces/municipalityXML";
-import { environment } from "@/environment";
-import axios from "axios";
-import { getSession } from "next-auth/react";
 
 
 interface IProps {
@@ -62,9 +57,7 @@ const MapComponent = ({ installation }: IProps) => {
     const allMunicipalities = useCadastreStore((state) => state.municipalities);
     const getCadastreMunicipalities = useCadastreStore((state) => state.getCadastreMunicipalities);
     const resetMunicipalities = useCadastreStore((state) => state.resetMunicipalities);
-    //const responseNonProtectedCadastre = useCadastreStore((state) => state.responseNonProtectedCadastre);
-    //const getNonProtectedCadastreData = useCadastreStore((state) => state.getNonProtectedCadastreData);
-
+    const getNonProtectedCadastreData = useCadastreStore((state) => state.getNonProtectedData);
     const polygonColor = "#FFFB89";
   
     const setProductInfoByProductNameFrom = (products: IProduct[]) => {
@@ -153,7 +146,6 @@ const MapComponent = ({ installation }: IProps) => {
     }
 
     const handleCadastreSearchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-      const baseURL: string = environment.urlConf + "/map";
       event.preventDefault();
       setResultCadastreSearch(null);
       const form = event.target as HTMLFormElement;
@@ -181,33 +173,14 @@ const MapComponent = ({ installation }: IProps) => {
       });
 
       if (cpine !== "" && np !== "" && cmc !== "" && cm !== "" && nm !== ""){
-          const defaultOptions = {
-              baseURL,
-          };
-          const instance = axios.create(defaultOptions);
-          instance.interceptors.request.use(async (request) => {
-            const session = await getSession();
-            if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
-            return request;
-          });
-          const params = {
-            provinceCode: cpine,
-            province: np,
-            municipalityCode: cmc,
-            INEMunicipalityCode: cm,
-            municipality: nm,
-            area: area,
-            plot: plot
-          };
-          const apiResponse = await instance.get(baseURL + "/getNonProtectedCatastroData", { params })
-          const response = apiResponse.data;
-          const lat = response[1];
-          const lon = response[0];
-
-          const coordinates = L.latLng(Number(lat), Number(lon));
-          // It appears that 18 is the maximum zoom leaflet is able to show on the map.
-          // @ts-ignore
-          map.flyTo(coordinates, 18);
+        const codes = {
+          cpine: cpine,
+          np: np,
+          cmc: cmc,
+          cm: cm,
+          nm: nm
+        }
+        getNonProtectedCadastreData(codes, area, plot, map!);
       }
       else
           message.error("Error in getting cadastre params.");

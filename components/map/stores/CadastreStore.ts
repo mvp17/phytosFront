@@ -6,16 +6,25 @@ import { IMunXML } from "../interfaces/municipalityXML";
 import axios from "axios";
 import { environment } from "@/environment";
 import { getSession } from 'next-auth/react';
+import * as L from "leaflet";
 
 const baseURL: string = environment.urlConf + "/map";
 
+type CadastreCodes = {
+  cpine: string,
+  np: string,
+  cmc: string,
+  cm: string,
+  nm: string,
+}
 interface CadastreState {
   provinces: IProvXML[];
   municipalities: IMunXML[];
-  responseNonProtectedCadastre: string[],
+  cadastreSearchResultCoordinates: string[],
   getCadastreProvinces: () => Promise<void>;
   resetMunicipalities: () => void;
   getCadastreMunicipalities: (provinceCode: string) => Promise<void>;
+  getNonProtectedData: (codes: CadastreCodes, area: string, plot: string, map: L.Map) => Promise<void>;
 }
 
 /*
@@ -35,7 +44,7 @@ export const useCadastreStore = create<CadastreState>()(
     devtools((set) => ({
       provinces: [],
       municipalities: [],
-      responseNonProtectedCadastre: [],
+      cadastreSearchResultCoordinates: [],
       getCadastreProvinces: async () => {
         const defaultOptions = {
             baseURL,
@@ -73,6 +82,35 @@ export const useCadastreStore = create<CadastreState>()(
         );
         set((state) => {
           state.municipalities = apiResponse.data;
+        });
+      },
+      getNonProtectedData: async (codes: CadastreCodes, area: string, plot: string, map: L.Map) => {
+        const defaultOptions = {
+          baseURL,
+        };
+        const instance = axios.create(defaultOptions);
+        instance.interceptors.request.use(async (request) => {
+          const session = await getSession();
+          if (session) request.headers.Authorization = `Bearer ${session.jwtToken}`;
+          return request;
+        });
+        const params = {
+          provinceCode: codes.cpine,
+          province: codes.np,
+          municipalityCode: codes.cmc,
+          INEMunicipalityCode: codes.cm,
+          municipality: codes.nm,
+          area: area,
+          plot: plot
+        };
+        const apiResponse = await instance.get(baseURL + "/getNonProtectedCatastroData", { params });
+        set((state) => {
+          state.cadastreSearchResultCoordinates = apiResponse.data;
+          const lat = state.cadastreSearchResultCoordinates[1];
+          const lon = state.cadastreSearchResultCoordinates[0];
+          const coordinates = L.latLng(Number(lat), Number(lon));
+          // It appears that 18 is the maximum zoom leaflet is able to show on the map.
+          map.flyTo(coordinates, 18);
         });
       }
     }))
