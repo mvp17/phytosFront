@@ -3,27 +3,20 @@ import Tooltip from "@mui/material/Tooltip";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import { useMap } from "react-leaflet";
 import * as L from "leaflet";
-import { Dispatch, SetStateAction } from "react";
 import { areThereAnyMarkers } from "../utils/areThereAnyMarkers";
-
-type Dispatcher = Dispatch<SetStateAction<boolean>>;
+import { useMapDataStore } from "../stores/MapDataStore";
 
 interface IProps {
-  actionRadius: boolean;
-  setActionRadius: Dispatcher;
   productDensity: number;
   productColor: string;
-  hiddenMarkersByDraggingCircles: Map<string, number[]>;
 }
 
-const SeeProductActionRadiusButton = ({
-  actionRadius,
-  setActionRadius,
-  productDensity,
-  productColor,
-  hiddenMarkersByDraggingCircles
-}: IProps) => {
+const SeeProductActionRadiusButton = ({ productDensity, productColor }: IProps) => {
   const map = useMap();
+  const actionRadius = useMapDataStore((state) => state.actionRadius);
+  const setActionRadius = useMapDataStore((state) => state.setActionRadius);
+  const hiddenMarkersByDraggingCircles = useMapDataStore((state) => state.hiddenMarkersByDraggingCircles);
+
   const radiation = () => {
     const layers: L.Layer[] = L.PM.Utils.findLayers(map);
     if (

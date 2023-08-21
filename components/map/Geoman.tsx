@@ -3,7 +3,7 @@ import { GeomanControls } from "react-leaflet-geoman-v2";
 import * as L from "leaflet";
 import * as turf from "@turf/turf";
 import { usePolygonsStore } from "./stores/PolygonsStore";
-import { Dispatch, SetStateAction } from "react";
+import { useEffect } from "react";
 import { createCircleWithActionRadius } from "./utils/createCircleWithAcionRadius";
 import { thousandsHundredsTensUnitsNumberString } from "./utils/thousandsHundredsTensUnitsNumberString";
 import { getDistanceFromTo } from "./utils/getDistanceFromTo";
@@ -13,82 +13,56 @@ import { greatestWaypointAmongAllLeaflet } from "./utils/greatestWaypointAmongAl
 import { useMap } from "react-leaflet";
 import { IPolygonMap } from "./interfaces/polygonMap";
 import { getTotalProductByTotalArea } from "./utils/getTotalProductByTotalArea";
-import { ISavePolygonsProps } from "./interfaces/savePolygonsProps";
 import { savePolygons } from "./utils/savePolygons";
-
-type DispatcherNumber = Dispatch<SetStateAction<number>>;
-type DispatcherBoolean = Dispatch<SetStateAction<boolean>>;
-type DispatcherString = Dispatch<SetStateAction<string>>;
+import { useMapDataStore } from "./stores/MapDataStore";
 
 interface IProps {
-  props: {
-    polygonColor: string;
-    idForMarkers: number;
-    setIdForMarkers: DispatcherNumber;
-    actionRadius: boolean;
-    setActionRadius: DispatcherBoolean;
-    productDensity: number;
-    productColor: string;
-    hiddenMarkersByDraggingCircles: Map<string, number[]>;
-    totalAreaPolygons: number;
-    setTotalAreaPolygons: DispatcherNumber;
-    totalAreaPolygonsString: string;
-    setTotalAreaPolygonsString: DispatcherString;
-    totalProducts: number;
-    setTotalProducts: DispatcherNumber;
-    markedProducts: number;
-    setMarkedProducts: DispatcherNumber;
-  };
+  productDensity: number;
+  productColor: string;
 }
 
-export default function Geoman({ props }: IProps) {
+export function GeomanWrapper({productDensity, productColor}: IProps) {
   const map = useMap();
   const polygons = usePolygonsStore((state) => state.polygonsData);
+  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  const actionRadius = useMapDataStore((state) => state.actionRadius);
+  const totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
+  const markedProducts = useMapDataStore((state) => state.markedProducts);
+  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
+  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
+  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
+  const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
 
   const handleChange = () => {
     console.log("Event fired!");
   };
 
-  const savePolygonsProps: ISavePolygonsProps = {
-    polygonColor: props.polygonColor,
-    totalAreaPolygons: props.totalAreaPolygons,
-    setTotalAreaPolygons: props.setTotalAreaPolygons,
-    setTotalAreaPolygonsString: props.setTotalAreaPolygonsString,
-    setTotalProducts: props.setTotalProducts,
-    productDensity: props.productDensity
-  };
+  useEffect(() => {
+    console.log("hola")
+  }, [map]);
 
   const onCreate = (e: { shape: string; layer: L.Layer }) => {
     const layer: L.Layer = e.layer;
-    savePolygons(layer, polygons, savePolygonsProps);
-
+    savePolygons(layer, polygons, productDensity);
     if (layer instanceof L.Marker) {
-      if (props.actionRadius) {
-        props.setIdForMarkers(props.idForMarkers + 1);
-        const propsCircleActionRadius = {
-          props: {
-            marker: layer,
-            idForMarkers: props.idForMarkers,
-            productDensity: props.productDensity,
-            productColor: props.productColor,
-            hiddenMarkersByDraggingCircles: props.hiddenMarkersByDraggingCircles
-          }
-        }
-        createCircleWithActionRadius(propsCircleActionRadius);
-        props.setMarkedProducts(props.markedProducts + 1);
+      if (actionRadius) {
+        setIdForMarkers(idForMarkers + 1);
+        createCircleWithActionRadius(layer, productDensity, productColor);
+        setMarkedProducts(markedProducts + 1);
       } else {
-        props.setIdForMarkers(props.idForMarkers + 1);
+        setIdForMarkers(idForMarkers + 1);
         layer.setIcon(
           L.divIcon({
             html:
               "&nbsp;&nbsp;&nbsp;&nbsp;" +
               '<b class="strokeme">' +
-              props.idForMarkers.toString() +
+              idForMarkers.toString() +
               "</b>"
           })
         );
-        layer.bindPopup(props.idForMarkers.toString());
-        props.setMarkedProducts(props.markedProducts + 1);
+        layer.bindPopup(idForMarkers.toString());
+        setMarkedProducts(markedProducts + 1);
       }
     }
 
@@ -126,23 +100,23 @@ export default function Geoman({ props }: IProps) {
               "ID: " + L.stamp(editedLayer) + " Area: " + areaString + " ha"
             );
 
-            props.setTotalAreaPolygons(props.totalAreaPolygons - polygon.area);
-            props.setTotalAreaPolygons(
-              props.totalAreaPolygons + updatedPolygon.area
+            setTotalAreaPolygons(totalAreaPolygons - polygon.area);
+            setTotalAreaPolygons(
+              totalAreaPolygons + updatedPolygon.area
             );
-            props.setTotalAreaPolygons(
-              Math.round(props.totalAreaPolygons * 10000) / 10000
+            setTotalAreaPolygons(
+              Math.round(totalAreaPolygons * 10000) / 10000
             );
 
-            areaString = props.totalAreaPolygons.toString().replace(".", ",");
+            areaString = totalAreaPolygons.toString().replace(".", ",");
 
-            props.setTotalAreaPolygonsString(
+            setTotalAreaPolygonsString(
               thousandsHundredsTensUnitsNumberString(areaString)
             );
-            props.setTotalProducts(
+            setTotalProducts(
               getTotalProductByTotalArea(
-                props.totalAreaPolygons,
-                props.productDensity
+                totalAreaPolygons,
+                productDensity
               )
             );
           }
@@ -158,31 +132,24 @@ export default function Geoman({ props }: IProps) {
         if (polygon.id === L.stamp(layer)) {
           const polygonToRemoveIndex = polygons.indexOf(polygon);
           polygons.splice(polygonToRemoveIndex, 1);
-          props.setTotalAreaPolygons(props.totalAreaPolygons - polygon.area);
-          props.setTotalAreaPolygons(
-            Math.round(props.totalAreaPolygons * 10000) / 10000
+          setTotalAreaPolygons(totalAreaPolygons - polygon.area);
+          setTotalAreaPolygons(
+            Math.round(totalAreaPolygons * 10000) / 10000
           );
           //Change the '.' to ',' (thousands, tens, units)
-          let areaString = props.totalAreaPolygons.toString().replace(".", ",");
-          props.totalAreaPolygonsString = thousandsHundredsTensUnitsNumberString(
-            areaString
-          );
-          props.setTotalProducts(
-            getTotalProductByTotalArea(
-              props.totalAreaPolygons,
-              props.productDensity
-            )
-          );
+          let areaString = totalAreaPolygons.toString().replace(".", ",");
+          setTotalAreaPolygonsString(thousandsHundredsTensUnitsNumberString(areaString));
+          setTotalProducts(getTotalProductByTotalArea(totalAreaPolygons,productDensity));
         }
       });
     }
     if (layer instanceof L.Marker) {
-      props.setMarkedProducts(props.markedProducts - 1);
+      setMarkedProducts(markedProducts - 1);
       const layers: L.Layer[] = L.PM.Utils.findLayers(map);
-      if (!areThereAnyMarkers(layers)) props.setIdForMarkers(0);
+      if (!areThereAnyMarkers(layers)) setIdForMarkers(0);
       else {
         const markersFromMap: L.Marker[] = getMarkersFromMap(layers);
-        props.setIdForMarkers(greatestWaypointAmongAllLeaflet(markersFromMap));
+        setIdForMarkers(greatestWaypointAmongAllLeaflet(markersFromMap));
       }
     }
   };

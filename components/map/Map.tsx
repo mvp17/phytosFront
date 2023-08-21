@@ -1,8 +1,8 @@
 import { Fragment, useState, useEffect } from "react";
 import { MapContainer } from "react-leaflet";
-import GeomanWrapper from "./Geoman";
+import { GeomanWrapper } from "./Geoman";
 import { Layers } from "./Layers";
-import Toolbar from "./Toolbar";
+import { Toolbar } from "./Toolbar";
 import { IProduct } from "@/app/products/Product";
 import { useProductStore } from "@/app/products/ProductsStore";
 import { useCadastreStore } from "./stores/CadastreStore";
@@ -25,40 +25,43 @@ import {
   Select,
   SelectItem,
 } from "@tremor/react";
+import { useMapDataStore } from "./stores/MapDataStore";
 
 
 interface IProps {
   installation: IInstallation;
 }
 
+
+
 const MapComponent = ({ installation }: IProps) => {
-    const [idForMarkers, setIdForMarkers] = useState(0);
     const [map, setMap] = useState(null);
+    
     const [resultGeoSearch, setResultGeoSearch] = useState<"ok" | "ko" | null>(null);
     const [resultCadastreSearch, setResultCadastreSearch] = useState<"ok" | "ko" | null>(null);
+    
     const [selectedProvince, setSelectedProvince] = useState("");
     const [selectedMunicipality, setSelectedMunicipality] = useState("");
-    const [actionRadius, setActionRadius] = useState(false);
-    const [totalAreaPolygons, setTotalAreaPolygons] = useState(0);
-    const [totalAreaPolygonsString, setTotalAreaPolygonsString] = useState("0");
-    const [totalProducts, setTotalProducts] = useState(0);
-    const [markedProducts, setMarkedProducts] = useState(0);
-    const hiddenMarkersByDraggingCircles: Map<string, number[]> = new Map<
-      string,
-      number[]
-    >();
+    
     const [productDensity, setProductDensity] = useState(0);
     const [productColor, setProductColor] = useState("");
 
     const allProducts = useProductStore((state) => state.productsData);
     const getAllProducts = useProductStore((state) => state.getAll);
+    
     const allProvinces = useCadastreStore((state) => state.provinces);
     const getCadastreProvinces = useCadastreStore((state) => state.getCadastreProvinces);
+    
     const allMunicipalities = useCadastreStore((state) => state.municipalities);
     const getCadastreMunicipalities = useCadastreStore((state) => state.getCadastreMunicipalities);
+    
     const resetMunicipalities = useCadastreStore((state) => state.resetMunicipalities);
+    
     const getNonProtectedCadastreData = useCadastreStore((state) => state.getNonProtectedData);
-    const polygonColor = "#FFFB89";
+
+    const totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
+    const totalProducts = useMapDataStore((state) => state.totalProducts);
+    const markedProducts = useMapDataStore((state) => state.markedProducts);
   
     const setProductInfoByProductNameFrom = (products: IProduct[]) => {
       if (products.length === 0) alert("No hi ha productes registrats!");
@@ -84,42 +87,6 @@ const MapComponent = ({ installation }: IProps) => {
       setProductInfoByProductNameFrom(allProducts);
       getCadastreProvinces();
     }, [productDensity, productColor, selectedProvince]);
-  
-    const geomanProps = {
-      polygonColor: polygonColor,
-      idForMarkers: idForMarkers,
-      setIdForMarkers: setIdForMarkers,
-      actionRadius: actionRadius,
-      setActionRadius: setActionRadius,
-      productDensity: productDensity,
-      productColor: productColor,
-      hiddenMarkersByDraggingCircles: hiddenMarkersByDraggingCircles,
-      totalAreaPolygons: totalAreaPolygons,
-      setTotalAreaPolygons: setTotalAreaPolygons,
-      totalAreaPolygonsString: totalAreaPolygonsString,
-      setTotalAreaPolygonsString: setTotalAreaPolygonsString,
-      totalProducts: totalProducts,
-      setTotalProducts: setTotalProducts,
-      markedProducts: markedProducts,
-      setMarkedProducts: setMarkedProducts
-    };
-  
-    const toolbarProps = {
-      idForMarkers: idForMarkers,
-      setIdForMarkers: setIdForMarkers,
-      actionRadius: actionRadius,
-      setActionRadius: setActionRadius,
-      hiddenMarkersByDraggingCircles: hiddenMarkersByDraggingCircles,
-      productDensity: productDensity,
-      productColor: productColor,
-      installation: installation,
-      polygonColor: polygonColor,
-      totalAreaPolygons: totalAreaPolygons,
-      setTotalAreaPolygons: setTotalAreaPolygons,
-      setTotalAreaPolygonsString: setTotalAreaPolygonsString,
-      setTotalProducts: setTotalProducts,
-      setMarkedProducts: setMarkedProducts
-    };
 
     const handleGeographicSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -201,7 +168,7 @@ const MapComponent = ({ installation }: IProps) => {
         <MapContainer
           center={[40.463667, -3.74922]}
           zoom={7}
-          scrollWheelZoom={false}
+          scrollWheelZoom={true}
            // @ts-ignore
           ref={setMap}
           style={{
@@ -211,9 +178,9 @@ const MapComponent = ({ installation }: IProps) => {
             overflow: "auto"
           }}
         >
-          <GeomanWrapper props={geomanProps} />
           <Layers />
-          <Toolbar props={toolbarProps} />
+          <GeomanWrapper productDensity={productDensity} productColor={productColor} />
+          <Toolbar productDensity={productDensity} productColor={productColor} installation={installation}/>
         </MapContainer>
         <Grid numItems={1} numItemsSm={3} numItemsLg={3}>
           <AccordionList>
@@ -304,4 +271,3 @@ const MapComponent = ({ installation }: IProps) => {
   };
 
   export default MapComponent;
-  

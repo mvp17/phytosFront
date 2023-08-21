@@ -3,26 +3,21 @@ import Tooltip from "@mui/material/Tooltip";
 import { useMap } from "react-leaflet";
 import SaveIcon from "@mui/icons-material/Save";
 import * as L from "leaflet";
-import { Dispatch, SetStateAction } from "react";
 import { IInstallation } from "@/app/installations/Installation";
 import { IMarkerSchema } from "../interfaces/markerSchema";
 import { usePostGeoJSONStore } from "../stores/PostGeoJSONStore";
+import { useMapDataStore } from "../stores/MapDataStore";
 
-type Dispatcher = Dispatch<SetStateAction<boolean>>;
 interface IProps {
-  actionRadius: boolean;
-  hiddenMarkersByDraggingCircles: Map<string, number[]>;
-  setActionRadius: Dispatcher;
   installation: IInstallation;
 }
 
-export function SaveGeoJSONElementsButton({
-  actionRadius,
-  hiddenMarkersByDraggingCircles,
-  setActionRadius,
-  installation
-}: IProps) {
+export function SaveGeoJSONElementsButton({installation}: IProps) {
   const map = useMap();
+  const actionRadius = useMapDataStore((state) => state.actionRadius);
+  const setActionRadius = useMapDataStore((state) => state.setActionRadius);
+  const hiddenMarkersByDraggingCircles = useMapDataStore((state) => state.hiddenMarkersByDraggingCircles);
+  
   const postMarkersApi = usePostGeoJSONStore((state) => state.postMarkersApi);
   const postLinestringsApi = usePostGeoJSONStore(
     (state) => state.postLinestringsApi

@@ -8,7 +8,6 @@ import { IMarkerSchema } from "../interfaces/markerSchema";
 import * as L from "leaflet";
 import { areThereAnyMarkers } from "../utils/areThereAnyMarkers";
 import { getMarkersFromMap } from "../utils/getMarkersFromMap";
-import { Dispatch, SetStateAction } from "react";
 import { greatestWaypointAmongAllLeaflet } from "../utils/greatestWaypointAmongAllLeaflet";
 import { ILineStringSchema } from "../interfaces/linestringSchema";
 import { getDistanceFromTo } from "../utils/getDistanceFromTo";
@@ -17,27 +16,19 @@ import { getLatLngFromLinestring } from "../utils/getLatLngFromLinestring";
 import { getLatLngFromPolygon} from "../utils/getLatLngFromPolygon";
 import { IPolygonSchema } from "../interfaces/polygonSchema";
 import { usePolygonsStore } from "../stores/PolygonsStore";
-import { ISavePolygonsProps } from "../interfaces/savePolygonsProps";
 import { savePolygons } from "../utils/savePolygons";
+import { useMapDataStore } from "../stores/MapDataStore";
 
-type DispatcherNumber = Dispatch<SetStateAction<number>>;
-type DispatcherString = Dispatch<SetStateAction<string>>;
 interface IProps {
-  props: {
-    installation: IInstallation;
-    idForMarkers: number;
-    setIdForMarkers: DispatcherNumber;
-    polygonColor: string;
-    totalAreaPolygons: number;
-    setTotalAreaPolygons: DispatcherNumber;
-    setTotalAreaPolygonsString: DispatcherString;
-    setTotalProducts: DispatcherNumber;
-    productDensity: number;
-  };
+  installation: IInstallation;
+  productDensity: number;
 }
 
-export function LoadGeoJSONElementsButton({ props }: IProps) {
+export function LoadGeoJSONElementsButton({ installation, productDensity }: IProps) {
   const map = useMap();
+  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+
   const polygonsFromStore = usePolygonsStore((state) => state.polygonsData);
   const allInstallationMarkers = useGetGeoJSONStore(
     (state) => state.markersData
@@ -59,7 +50,7 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
   );
 
   const load = () => {
-    getInstallationMarkersApi(props.installation._id);
+    getInstallationMarkersApi(installation._id);
     const markers: IMarkerSchema[] = allInstallationMarkers;
     if (markers.length === 0)
       alert("No hi ha waypoints guardats per aquesta instal·lació!");
@@ -74,7 +65,7 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
         ) {
           // Si entra aquí, carregarà els punts guardats de la bd juntament amb els que hi ha al mapa.
           const markersFromMapInit: L.Marker[] = getMarkersFromMap(layers);
-          props.setIdForMarkers(
+          setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapInit)
           );
 
@@ -84,13 +75,13 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
               marker.coordinates[1]
             );
             const markerToMap: L.Marker = L.marker(latLngExpression);
-            props.setIdForMarkers(props.idForMarkers + 1);
+            setIdForMarkers(idForMarkers + 1);
             markerToMap.setIcon(
               L.divIcon({
-                html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${props.idForMarkers.toString()}</b>`
+                html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${idForMarkers.toString()}</b>`
               })
             );
-            markerToMap.bindPopup(props.idForMarkers.toString());
+            markerToMap.bindPopup(idForMarkers.toString());
             map.addLayer(markerToMap);
             // It is supposed that in here there are less added products to the map
             // than the total number of products available for the installation.
@@ -104,7 +95,7 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
           map.flyTo(latLngToFly, 15);
           const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
           const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
-          props.setIdForMarkers(
+          setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapEnd)
           );
         }
@@ -142,14 +133,14 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
           map.flyTo(latLngToFly, 15);
           const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
           const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
-          props.setIdForMarkers(
+          setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapEnd)
           );
         }
       }
     }
 
-    getInstallationLinestringsApi(props.installation._id);
+    getInstallationLinestringsApi(installation._id);
     const linestrings: ILineStringSchema[] = allInstallationLinestrings;
     if (linestrings.length === 0)
       alert("No hi ha distàncies guardades per aquesta instal·lació!");
@@ -170,16 +161,7 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
       });
     }
 
-    const savePolygonsProps: ISavePolygonsProps = {
-      polygonColor: props.polygonColor,
-      totalAreaPolygons: props.totalAreaPolygons,
-      setTotalAreaPolygons: props.setTotalAreaPolygons,
-      setTotalAreaPolygonsString: props.setTotalAreaPolygonsString,
-      setTotalProducts: props.setTotalProducts,
-      productDensity: props.productDensity
-    };
-
-    getInstallationPolygonsApi(props.installation._id);
+    getInstallationPolygonsApi(installation._id);
     const polygons: IPolygonSchema[] = allInstallationPolygons;
     if (polygons.length === 0)
       alert("No hi ha polígons guardats per aquesta instal·lació!");
@@ -190,7 +172,7 @@ export function LoadGeoJSONElementsButton({ props }: IProps) {
         );
         const polygonToMap: L.Polygon = L.polygon(latLngExpression);
         map.addLayer(polygonToMap);
-        savePolygons(polygonToMap, polygonsFromStore, savePolygonsProps);
+        savePolygons(polygonToMap, polygonsFromStore, productDensity);
       });
     }
   };

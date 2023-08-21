@@ -1,15 +1,21 @@
-import { ISavePolygonsProps } from "../interfaces/savePolygonsProps";
 import { IPolygonMap } from "../interfaces/polygonMap";
 import * as L from "leaflet";
 import * as turf from "@turf/turf";
 import { thousandsHundredsTensUnitsNumberString } from "./thousandsHundredsTensUnitsNumberString";
 import { getTotalProductByTotalArea } from "./getTotalProductByTotalArea";
+import { useMapDataStore } from "../stores/MapDataStore";
 
-export const savePolygons = (
-  polygon: L.Layer,
-  polygons: IPolygonMap[],
-  props: ISavePolygonsProps
-) => {
+export const savePolygons = (polygon: L.Layer, 
+                             polygons: IPolygonMap[], 
+                             productDensity: number) => {
+  const polygonColor = useMapDataStore((state) => state.polygonColor);
+  const totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
+  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
+  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
+  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
+
+
+
   if (polygon instanceof L.Polygon) {
     const area: number = turf.area(polygon.toGeoJSON()) / 10000;
     const newPolygon: IPolygonMap = {
@@ -24,7 +30,7 @@ export const savePolygons = (
       "ID: " + L.stamp(polygon) + " Area: " + areaString + " ha"
     );
     //polygon style
-    polygon.setStyle({ color: props.polygonColor });
+    polygon.setStyle({ color: polygonColor });
 
     //Disable dragging polygons
     var initialPolygonLatLngs = polygon.getLatLngs();
@@ -32,16 +38,16 @@ export const savePolygons = (
       polygon.setLatLngs(initialPolygonLatLngs);
     });
 
-    props.setTotalAreaPolygons(props.totalAreaPolygons + newPolygon.area);
-    props.setTotalAreaPolygons(
-      Math.round(props.totalAreaPolygons * 10000) / 10000
+    setTotalAreaPolygons(totalAreaPolygons + newPolygon.area);
+    setTotalAreaPolygons(
+      Math.round(totalAreaPolygons * 10000) / 10000
     );
-    areaString = props.totalAreaPolygons.toString().replace(".", ",");
-    props.setTotalAreaPolygonsString(
+    areaString = totalAreaPolygons.toString().replace(".", ",");
+    setTotalAreaPolygonsString(
       thousandsHundredsTensUnitsNumberString(areaString)
     );
-    props.setTotalProducts(
-      getTotalProductByTotalArea(props.totalAreaPolygons, props.productDensity)
+    setTotalProducts(
+      getTotalProductByTotalArea(totalAreaPolygons, productDensity)
     );
   }
 };

@@ -1,6 +1,5 @@
 import Control from "react-leaflet-custom-control";
 import { Stack } from "@mui/material";
-import { Dispatch, SetStateAction } from "react";
 import { SaveGeoJSONElementsButton } from "./geoElementsManager/SaveGeoJSONElementsButton";
 import { LoadGeoJSONElementsButton } from "./geoElementsManager/LoadGeoJSONElementsButton";
 import { CleanMapButton } from "./geoElementsManager/CleanMapButton";
@@ -11,82 +10,34 @@ import { DownloadReportButton } from "./filesManager/DownloadReportButton";
 import SeeProductActionRadiusButton from "./geoElementsManager/SeeProductActionRadiusButton";
 import { IInstallation } from "@/app/installations/Installation";
 
-type DispatcherNumber = Dispatch<SetStateAction<number>>;
-type DispatcherActionRadius = Dispatch<SetStateAction<boolean>>;
-type DispatcherString = Dispatch<SetStateAction<string>>;
 
 interface IProps {
-  props: {
-    idForMarkers: number;
-    setIdForMarkers: DispatcherNumber;
-    actionRadius: boolean;
-    setActionRadius: DispatcherActionRadius;
-    hiddenMarkersByDraggingCircles: Map<string, number[]>;
     productDensity: number;
     productColor: string;
     installation: IInstallation;
-    polygonColor: string;
-    totalAreaPolygons: number;
-    setTotalAreaPolygons: DispatcherNumber;
-    setTotalAreaPolygonsString: DispatcherString;
-    setTotalProducts: DispatcherNumber;
-    setMarkedProducts: DispatcherNumber;
-  };
 }
 
-const Toolbar = ({ props }: IProps) => {
-  const loadGeoJSONElementsButtonProps = {
-    installation: props.installation,
-    idForMarkers: props.idForMarkers,
-    setIdForMarkers: props.setIdForMarkers,
-    polygonColor: props.polygonColor,
-    totalAreaPolygons: props.totalAreaPolygons,
-    setTotalAreaPolygons: props.setTotalAreaPolygons,
-    setTotalAreaPolygonsString: props.setTotalAreaPolygonsString,
-    setTotalProducts: props.setTotalProducts,
-    productDensity: props.productDensity
-  };
-
-  const cleanMapButtonProps = {
-    setIdForMarkers: props.setIdForMarkers,
-    setTotalAreaPolygons: props.setTotalAreaPolygons,
-    setTotalProducts: props.setTotalProducts,
-    setMarkedProducts: props.setMarkedProducts,
-    setTotalAreaPolygonsString: props.setTotalAreaPolygonsString
-  };
-
+export function Toolbar({ productDensity, productColor, installation}: IProps) {
   return (
     <Control prepend position="bottomleft">
       <Stack direction="column" spacing={2}>
         <SaveGeoJSONElementsButton
-          actionRadius={props.actionRadius}
-          hiddenMarkersByDraggingCircles={props.hiddenMarkersByDraggingCircles}
-          setActionRadius={props.setActionRadius}
-          installation={props.installation}
+          installation={installation}
         />
-        <LoadGeoJSONElementsButton props={loadGeoJSONElementsButtonProps} />
-        <CleanMapButton props={cleanMapButtonProps} />
-        <DeleteGeoJSONElementsButton installation={props.installation} />
+        <LoadGeoJSONElementsButton installation={installation} productDensity={productDensity} />
+        <CleanMapButton />
+        <DeleteGeoJSONElementsButton installation={installation} />
         <ExportMarkersGPXFileButton />
         <ImportMarkersGPXFileButton
-          idForMarkers={props.idForMarkers}
-          setIdForMarkers={props.setIdForMarkers}
-          actionRadius={props.actionRadius}
-          hiddenMarkersByDraggingCircles={props.hiddenMarkersByDraggingCircles}
-          productDensity={props.productDensity}
-          productColor={props.productColor}
+          productDensity={productDensity}
+          productColor={productColor}
         />
-        <DownloadReportButton installation={props.installation} />
+        <DownloadReportButton installation={installation} />
         <SeeProductActionRadiusButton
-          actionRadius={props.actionRadius}
-          setActionRadius={props.setActionRadius}
-          productDensity={props.productDensity}
-          productColor={props.productColor}
-          hiddenMarkersByDraggingCircles={props.hiddenMarkersByDraggingCircles}
+          productDensity={productDensity}
+          productColor={productColor}
         />
       </Stack>
     </Control>
   );
 };
-
-export default Toolbar;

@@ -5,26 +5,21 @@ import { useMap } from "react-leaflet";
 import * as L from "leaflet";
 import { Dispatch, SetStateAction } from "react";
 import { createCircleWithActionRadius } from "../utils/createCircleWithAcionRadius";
+import { useMapDataStore } from "../stores/MapDataStore";
 
 type Dispatcher = Dispatch<SetStateAction<number>>;
 interface IProps {
-  idForMarkers: number;
-  setIdForMarkers: Dispatcher;
-  actionRadius: boolean;
-  hiddenMarkersByDraggingCircles: Map<string, number[]>;
   productDensity: number;
   productColor: string;
 }
 
-const ImportMarkersGPXFileButton = ({
-  idForMarkers,
-  setIdForMarkers,
-  actionRadius,
-  hiddenMarkersByDraggingCircles,
-  productDensity,
-  productColor
-}: IProps) => {
+const ImportMarkersGPXFileButton = ({ productDensity, productColor }: IProps) => {
   const map = useMap();
+  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  const actionRadius = useMapDataStore((state) => state.actionRadius);
+  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+  const markedProducts = useMapDataStore((state) => state.markedProducts);
+  const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
 
   const processGPXHTMLCollection = (collection: HTMLCollection) => {
     var stringLatsLons: [string, string][] = [];
@@ -42,18 +37,9 @@ const ImportMarkersGPXFileButton = ({
       );
       const marker: L.Marker = L.marker(latLng);
       if (actionRadius) {
-        const propsCircleActionRadius = {
-          props: {
-            marker: marker,
-            idForMarkers: idForMarkers,
-            productDensity: productDensity,
-            productColor: productColor,
-            hiddenMarkersByDraggingCircles: hiddenMarkersByDraggingCircles
-          }
-        }
-        createCircleWithActionRadius(propsCircleActionRadius);
-        setIdForMarkers(idForMarkers + 1); //idForMarkers += 1;
-        //this.mapService.markedProducts += 1;
+        createCircleWithActionRadius(marker, productDensity, productColor);
+        setIdForMarkers(idForMarkers + 1);
+        setMarkedProducts(markedProducts + 1);
       } else {
         marker.setIcon(
           L.divIcon({
@@ -65,8 +51,8 @@ const ImportMarkersGPXFileButton = ({
           })
         );
         marker.bindPopup(idForMarkers.toString());
-        setIdForMarkers(idForMarkers + 1); //idForMarkers += 1;
-        //this.mapService.markedProducts += 1;
+        setIdForMarkers(idForMarkers + 1);
+        setMarkedProducts(markedProducts + 1);
       }
       marker.addTo(map);
     });
