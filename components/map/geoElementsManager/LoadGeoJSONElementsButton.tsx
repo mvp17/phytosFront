@@ -16,8 +16,10 @@ import { getLatLngFromLinestring } from "../utils/getLatLngFromLinestring";
 import { getLatLngFromPolygon} from "../utils/getLatLngFromPolygon";
 import { IPolygonSchema } from "../interfaces/polygonSchema";
 import { usePolygonsStore } from "../stores/PolygonsStore";
-import { savePolygons } from "../utils/savePolygons";
 import { useMapDataStore } from "../stores/MapDataStore";
+import { IPolygonMap } from "../interfaces/polygonMap";
+import { getTotalProductByTotalArea } from "../utils/getTotalProductByTotalArea";
+import * as turf from "@turf/turf";
 
 interface IProps {
   installation: IInstallation;
@@ -26,8 +28,17 @@ interface IProps {
 
 export function LoadGeoJSONElementsButton({ installation, productDensity }: IProps) {
   const map = useMap();
-  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  let idForMarkers = useMapDataStore((state) => state.idForMarkers);
   const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+  let markedProducts = useMapDataStore((state) => state.markedProducts);
+  const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
+
+  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
+  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
+  let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
+  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
+  let totalProducts = useMapDataStore((state) => state.totalProducts);
+  let totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
 
   const polygonsFromStore = usePolygonsStore((state) => state.polygonsData);
   const allInstallationMarkers = useGetGeoJSONStore(
@@ -49,6 +60,50 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
     (state) => state.getInstallationPolygonsApi
   );
 
+  const savePolygons = (polygon: L.Layer, polygons: IPolygonMap[], productDensity: number) => {
+    if (polygon instanceof L.Polygon) {
+      const area: number = turf.area(polygon.toGeoJSON()) / 10000;
+      const newPolygon: IPolygonMap = {
+        area: Math.round(area * 10000) / 10000,
+        id: L.stamp(polygon)
+      };
+      polygons.push(newPolygon);
+      let areaString = newPolygon.area.toString().replace(".", ",");
+      areaString = thousandsHundredsTensUnitsNumberString(areaString);
+  
+      polygon.bindPopup(
+        "ID: " + L.stamp(polygon) + " Area: " + areaString + " ha"
+      );
+      //polygon style
+      polygon.setStyle({ color: useMapDataStore.getState().polygonColor });
+  
+      //Disable dragging polygons
+      var initialPolygonLatLngs = polygon.getLatLngs();
+      polygon.on("pm:dragend", () => {
+        polygon.setLatLngs(initialPolygonLatLngs);
+      });
+  
+      setTotalAreaPolygons(totalAreaPolygons + newPolygon.area);
+      totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
+
+      setTotalAreaPolygons(
+        Math.round(totalAreaPolygons * 10000) / 10000
+      );
+      totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
+
+      areaString = totalAreaPolygons.toString().replace(".", ",");
+      setTotalAreaPolygonsString(
+        thousandsHundredsTensUnitsNumberString(areaString)
+      );
+      totalAreaPolygonsString = useMapDataStore.getState().totalAreaPolygonsString;
+      
+      setTotalProducts(
+        getTotalProductByTotalArea(totalAreaPolygons, productDensity)
+      );
+      totalProducts = useMapDataStore.getState().totalProducts;
+    }
+  }
+
   const load = () => {
     getInstallationMarkersApi(installation._id);
     const markers: IMarkerSchema[] = allInstallationMarkers;
@@ -68,6 +123,7 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
           setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapInit)
           );
+          idForMarkers = useMapDataStore.getState().idForMarkers;
 
           markers.forEach((marker: IMarkerSchema) => {
             const latLngExpression = L.latLng(
@@ -76,6 +132,7 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
             );
             const markerToMap: L.Marker = L.marker(latLngExpression);
             setIdForMarkers(idForMarkers + 1);
+            idForMarkers = useMapDataStore.getState().idForMarkers;
             markerToMap.setIcon(
               L.divIcon({
                 html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${idForMarkers.toString()}</b>`
@@ -85,7 +142,8 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
             map.addLayer(markerToMap);
             // It is supposed that in here there are less added products to the map
             // than the total number of products available for the installation.
-            // TODO this.mapService.markedProducts += 1;
+            setMarkedProducts(markedProducts + 1);
+            markedProducts = useMapDataStore.getState().markedProducts;
           });
           // First marker position to fly on map.
           const latLngToFly = L.latLng(
@@ -98,6 +156,7 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
           setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapEnd)
           );
+          idForMarkers = useMapDataStore.getState().idForMarkers;
         }
       } else {
         if (
@@ -136,6 +195,7 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
           setIdForMarkers(
             greatestWaypointAmongAllLeaflet(markersFromMapEnd)
           );
+          idForMarkers = useMapDataStore.getState().idForMarkers;
         }
       }
     }

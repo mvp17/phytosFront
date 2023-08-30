@@ -13,7 +13,7 @@ interface IProps {
 
 const SeeProductActionRadiusButton = ({ productDensity, productColor }: IProps) => {
   const map = useMap();
-  const actionRadius = useMapDataStore((state) => state.actionRadius);
+  let actionRadius = useMapDataStore((state) => state.actionRadius);
   const setActionRadius = useMapDataStore((state) => state.setActionRadius);
   const hiddenMarkersByDraggingCircles = useMapDataStore((state) => state.hiddenMarkersByDraggingCircles);
 
@@ -26,7 +26,8 @@ const SeeProductActionRadiusButton = ({ productDensity, productColor }: IProps) 
     ) {
       // S'activa el radi
       if (!actionRadius) {
-        setActionRadius(true); //this.actionRadius = true;
+        setActionRadius(true);
+        actionRadius = useMapDataStore.getState().actionRadius;
         if (areThereAnyMarkers(layers)) {
           layers.forEach((layer: L.Layer) => {
             if (layer instanceof L.Marker) {
@@ -38,9 +39,10 @@ const SeeProductActionRadiusButton = ({ productDensity, productColor }: IProps) 
                 fillColor: productColor,
                 color: "#000000"
               }).setRadius(radius);
+              
               const layerContent = layer!.getPopup()!.getContent();
               if (layerContent) circle.bindTooltip(layerContent);
-
+              map.addLayer(circle);
               circle.addTo(map);
               circle.on("pm:dragstart", () => {
                 const layers: L.Layer[] = L.PM.Utils.findLayers(map);
@@ -70,7 +72,8 @@ const SeeProductActionRadiusButton = ({ productDensity, productColor }: IProps) 
     } else {
       // es desactiva el radi
       if (actionRadius) {
-        setActionRadius(false); // this.actionRadius = false;
+        setActionRadius(false);
+        actionRadius = useMapDataStore.getState().actionRadius;
         layers.forEach((layer: L.Layer) => {
           if (layer instanceof L.Circle) map.removeLayer(layer);
         });

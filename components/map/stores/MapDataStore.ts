@@ -1,8 +1,6 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
 
-interface MapState {
+type MapState = {
   idForMarkers: number;
   actionRadius: boolean;
   totalAreaPolygons: number;
@@ -11,7 +9,7 @@ interface MapState {
   markedProducts: number;
   polygonColor: string;
   hiddenMarkersByDraggingCircles: Map<string, number[]>;
-  setIdForMarkers: (newValue: number) => void;
+  setIdForMarkers: (newValue: number) => void
   setActionRadius: (newValue: boolean) => void;
   setTotalAreaPolygons: (newValue: number) => void;
   setTotalAreaPolygonsString: (newValue: string) => void;
@@ -32,50 +30,20 @@ Hence using devtools at the end makes sure that no middlewares mutate
 setState before it.
 */
 
-export const useMapDataStore = create<MapState>()(
-    immer(
-        devtools((set) => ({
-            idForMarkers: 0,
-            actionRadius: false,
-            totalAreaPolygons: 0,
-            totalAreaPolygonsString: "0",
-            totalProducts: 0,
-            markedProducts: 0,
-            polygonColor: "#FFFB89",
-            hiddenMarkersByDraggingCircles: new Map<string, number[]>(),
-            setIdForMarkers: (newValue: number) => {
-                set((state) => {
-                state.idForMarkers = newValue;
-                });
-            },
-            setActionRadius: (newValue: boolean) => {
-                set((state) => {
-                state.actionRadius = newValue;
-                });
-            },
-            setTotalAreaPolygons: (newValue: number) => {
-                set((state) => {
-                state.totalAreaPolygons = newValue;
-                });
-            },
-            setTotalAreaPolygonsString: (newValue: string) => {
-                set((state) => {
-                state.totalAreaPolygonsString = newValue;
-                });
-            },
-            setTotalProducts: (newValue: number) => {
-                set((state) => {
-                state.totalProducts = newValue;
-                });
-            },
-            setMarkedProducts: (newValue: number) => {
-                set((state) => {
-                state.markedProducts = newValue;
-                });
-            },
-            setHiddenMarkersByDraggingCircles: () => {
-
-            }
-        }))
-    )
-);
+export const useMapDataStore = create<MapState>()((set) => ({
+    idForMarkers: 0,
+    actionRadius: false,
+    totalAreaPolygons: 0,
+    totalAreaPolygonsString: "0",
+    totalProducts: 0,
+    markedProducts: 0,
+    polygonColor: "#FFFB89",
+    hiddenMarkersByDraggingCircles: new Map<string, number[]>(),
+    setIdForMarkers: (newValue: number) => set(() => ({ idForMarkers: newValue })),
+    setActionRadius: (newValue: boolean) => set(() => ({actionRadius: newValue})),
+    setTotalAreaPolygons: (newValue: number) => set(() => ({totalAreaPolygons: newValue})),
+    setTotalAreaPolygonsString: (newValue: string) => set(() => ({totalAreaPolygonsString: newValue})),
+    setTotalProducts: (newValue: number) => set(() => ({totalProducts: newValue})),
+    setMarkedProducts: (newValue: number) => set(() => ({markedProducts: newValue})),
+    setHiddenMarkersByDraggingCircles: () => set(() => ({}))
+}))

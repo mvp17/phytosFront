@@ -26,6 +26,7 @@ import {
   SelectItem,
 } from "@tremor/react";
 import { useMapDataStore } from "./stores/MapDataStore";
+import { Checkbox } from 'antd';
 
 
 interface IProps {
@@ -59,9 +60,10 @@ const MapComponent = ({ installation }: IProps) => {
     
     const getNonProtectedCadastreData = useCadastreStore((state) => state.getNonProtectedData);
 
-    const totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
-    const totalProducts = useMapDataStore((state) => state.totalProducts);
-    const markedProducts = useMapDataStore((state) => state.markedProducts);
+    let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
+    let totalProducts = useMapDataStore((state) => state.totalProducts);
+    let markedProducts = useMapDataStore((state) => state.markedProducts);
+    let actionRadius = useMapDataStore((state) => state.actionRadius);
   
     const setProductInfoByProductNameFrom = (products: IProduct[]) => {
       if (products.length === 0) alert("No hi ha productes registrats!");
@@ -193,6 +195,13 @@ const MapComponent = ({ installation }: IProps) => {
                   <Metric>{totalProducts}</Metric>
                   <Text>Total {installation.productName}s marked on the map</Text>
                   <Metric>{markedProducts}</Metric>
+                  <Text>Action Radius</Text>
+                  <span>
+                    {actionRadius && (
+                      <Badge color="green" style={{ marginLeft: "16px" }}>Action radius enabled</Badge>
+                    )}
+                    {!actionRadius && <Badge color="red" style={{ marginLeft: "16px" }}>Action radius disabled</Badge>}
+                  </span>
                 </AccordionBody>
             </Accordion>
             <Accordion defaultOpen={true}>

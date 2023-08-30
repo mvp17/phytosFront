@@ -3,7 +3,6 @@ import { GeomanControls } from "react-leaflet-geoman-v2";
 import * as L from "leaflet";
 import * as turf from "@turf/turf";
 import { usePolygonsStore } from "./stores/PolygonsStore";
-import { useEffect } from "react";
 import { createCircleWithActionRadius } from "./utils/createCircleWithAcionRadius";
 import { thousandsHundredsTensUnitsNumberString } from "./utils/thousandsHundredsTensUnitsNumberString";
 import { getDistanceFromTo } from "./utils/getDistanceFromTo";
@@ -13,7 +12,6 @@ import { greatestWaypointAmongAllLeaflet } from "./utils/greatestWaypointAmongAl
 import { useMap } from "react-leaflet";
 import { IPolygonMap } from "./interfaces/polygonMap";
 import { getTotalProductByTotalArea } from "./utils/getTotalProductByTotalArea";
-import { savePolygons } from "./utils/savePolygons";
 import { useMapDataStore } from "./stores/MapDataStore";
 
 interface IProps {
@@ -24,23 +22,67 @@ interface IProps {
 export function GeomanWrapper({productDensity, productColor}: IProps) {
   const map = useMap();
   const polygons = usePolygonsStore((state) => state.polygonsData);
-  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
-  const actionRadius = useMapDataStore((state) => state.actionRadius);
-  const totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
-  const markedProducts = useMapDataStore((state) => state.markedProducts);
+  let idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  let actionRadius = useMapDataStore((state) => state.actionRadius);
+  let totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
+  let markedProducts = useMapDataStore((state) => state.markedProducts);
   const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
   const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
   const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
+  let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
   const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
+  let totalProducts = useMapDataStore((state) => state.totalProducts);
   const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
+  const polygonColor = useMapDataStore((state) => state.polygonColor);
+
 
   const handleChange = () => {
     console.log("Event fired!");
   };
 
-  useEffect(() => {
-    console.log("hola")
-  }, [map]);
+  const savePolygons = (polygon: L.Layer, polygons: IPolygonMap[], productDensity: number) => {
+    if (polygon instanceof L.Polygon) {
+      const area: number = turf.area(polygon.toGeoJSON()) / 10000;
+      const newPolygon: IPolygonMap = {
+        area: Math.round(area * 10000) / 10000,
+        id: L.stamp(polygon)
+      };
+      polygons.push(newPolygon);
+      let areaString = newPolygon.area.toString().replace(".", ",");
+      areaString = thousandsHundredsTensUnitsNumberString(areaString);
+  
+      polygon.bindPopup(
+        "ID: " + L.stamp(polygon) + " Area: " + areaString + " ha"
+      );
+      //polygon style
+      polygon.setStyle({ color: polygonColor });
+  
+      //Disable dragging polygons
+      var initialPolygonLatLngs = polygon.getLatLngs();
+      polygon.on("pm:dragend", () => {
+        polygon.setLatLngs(initialPolygonLatLngs);
+      });
+  
+      setTotalAreaPolygons(totalAreaPolygons + newPolygon.area);
+      totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
+
+      setTotalAreaPolygons(
+        Math.round(totalAreaPolygons * 10000) / 10000
+      );
+      totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
+
+      areaString = totalAreaPolygons.toString().replace(".", ",");
+      setTotalAreaPolygonsString(
+        thousandsHundredsTensUnitsNumberString(areaString)
+      );
+      totalAreaPolygonsString = useMapDataStore.getState().totalAreaPolygonsString;
+
+      setTotalProducts(
+        getTotalProductByTotalArea(totalAreaPolygons, productDensity)
+      );
+      totalProducts = useMapDataStore.getState().totalProducts;
+    }
+  }
 
   const onCreate = (e: { shape: string; layer: L.Layer }) => {
     const layer: L.Layer = e.layer;
@@ -48,10 +90,13 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
     if (layer instanceof L.Marker) {
       if (actionRadius) {
         setIdForMarkers(idForMarkers + 1);
+        idForMarkers = useMapDataStore.getState().idForMarkers;
         createCircleWithActionRadius(layer, productDensity, productColor);
         setMarkedProducts(markedProducts + 1);
+        markedProducts = useMapDataStore.getState().markedProducts;
       } else {
         setIdForMarkers(idForMarkers + 1);
+        idForMarkers = useMapDataStore.getState().idForMarkers;
         layer.setIcon(
           L.divIcon({
             html:
@@ -63,6 +108,7 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
         );
         layer.bindPopup(idForMarkers.toString());
         setMarkedProducts(markedProducts + 1);
+        markedProducts = useMapDataStore.getState().markedProducts;
       }
     }
 
@@ -101,12 +147,16 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
             );
 
             setTotalAreaPolygons(totalAreaPolygons - polygon.area);
+            totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
             setTotalAreaPolygons(
               totalAreaPolygons + updatedPolygon.area
             );
+            totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
+
             setTotalAreaPolygons(
               Math.round(totalAreaPolygons * 10000) / 10000
             );
+            totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
 
             areaString = totalAreaPolygons.toString().replace(".", ",");
 
@@ -133,9 +183,11 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
           const polygonToRemoveIndex = polygons.indexOf(polygon);
           polygons.splice(polygonToRemoveIndex, 1);
           setTotalAreaPolygons(totalAreaPolygons - polygon.area);
+          totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
           setTotalAreaPolygons(
             Math.round(totalAreaPolygons * 10000) / 10000
           );
+          totalAreaPolygons = useMapDataStore.getState().totalAreaPolygons;
           //Change the '.' to ',' (thousands, tens, units)
           let areaString = totalAreaPolygons.toString().replace(".", ",");
           setTotalAreaPolygonsString(thousandsHundredsTensUnitsNumberString(areaString));
@@ -150,6 +202,7 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
       else {
         const markersFromMap: L.Marker[] = getMarkersFromMap(layers);
         setIdForMarkers(greatestWaypointAmongAllLeaflet(markersFromMap));
+        idForMarkers = useMapDataStore.getState().idForMarkers;
       }
     }
   };
