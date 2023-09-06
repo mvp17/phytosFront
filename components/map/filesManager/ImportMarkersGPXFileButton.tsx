@@ -6,6 +6,7 @@ import * as L from "leaflet";
 import { Dispatch, SetStateAction } from "react";
 import { createCircleWithActionRadius } from "../utils/createCircleWithAcionRadius";
 import { useMapDataStore } from "../stores/MapDataStore";
+import { greatestWaypointAmongAllLeaflet } from "../utils/greatestWaypointAmongAllLeaflet";
 
 type Dispatcher = Dispatch<SetStateAction<number>>;
 interface IProps {
@@ -15,21 +16,25 @@ interface IProps {
 
 const ImportMarkersGPXFileButton = ({ productDensity, productColor }: IProps) => {
   const map = useMap();
-  const idForMarkers = useMapDataStore((state) => state.idForMarkers);
   const actionRadius = useMapDataStore((state) => state.actionRadius);
-  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
-  const markedProducts = useMapDataStore((state) => state.markedProducts);
+  
+  let idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers); 
+  
+  let markedProducts = useMapDataStore((state) => state.markedProducts);
   const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
 
   const processGPXHTMLCollection = (collection: HTMLCollection) => {
     var stringLatsLons: [string, string][] = [];
+    let markers: L.Marker[] = [];
+
     for (let i = 0; i < collection.length; i++) {
       const lat = collection[i]!.getAttributeNode("lat")!.nodeValue;
       const lon = collection[i]!.getAttributeNode("lon")!.nodeValue;
       if (lat && lon) stringLatsLons.push([lat, lon]);
     }
-
-    setIdForMarkers(1); //this.idForMarkers = 1;
+    setIdForMarkers(1);
+    idForMarkers = useMapDataStore.getState().idForMarkers;
     stringLatsLons.forEach((latLon: [string, string]) => {
       const latLng: L.LatLng = L.latLng(
         parseFloat(latLon[0]),
@@ -39,7 +44,9 @@ const ImportMarkersGPXFileButton = ({ productDensity, productColor }: IProps) =>
       if (actionRadius) {
         createCircleWithActionRadius(marker, productDensity, productColor);
         setIdForMarkers(idForMarkers + 1);
+        idForMarkers = useMapDataStore.getState().idForMarkers;
         setMarkedProducts(markedProducts + 1);
+        markedProducts = useMapDataStore.getState().markedProducts;
       } else {
         marker.setIcon(
           L.divIcon({
@@ -52,9 +59,12 @@ const ImportMarkersGPXFileButton = ({ productDensity, productColor }: IProps) =>
         );
         marker.bindPopup(idForMarkers.toString());
         setIdForMarkers(idForMarkers + 1);
+        idForMarkers = useMapDataStore.getState().idForMarkers;
         setMarkedProducts(markedProducts + 1);
+        markedProducts = useMapDataStore.getState().markedProducts;
       }
       marker.addTo(map);
+      markers.push(marker);
     });
     // First marker position to fly on map.
     const latLngToFly = L.latLng(
@@ -62,6 +72,9 @@ const ImportMarkersGPXFileButton = ({ productDensity, productColor }: IProps) =>
       parseFloat(stringLatsLons[0][1])
     );
     map.flyTo(latLngToFly, 15);
+
+    setIdForMarkers(greatestWaypointAmongAllLeaflet(markers));
+    idForMarkers = useMapDataStore.getState().idForMarkers;
   };
 
   const displayMarkersOnMapFromGPX = (gpxFile: File) => {

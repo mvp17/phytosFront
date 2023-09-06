@@ -1,40 +1,70 @@
+import * as L from "leaflet";
+import * as turf from "@turf/turf";
 import { Button } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import SummarizeIcon from "@mui/icons-material/Summarize";
-import { useMap } from "react-leaflet";
 import { IPerson } from "@/app/persons/Person";
 import { IInstallation } from "@/app/installations/Installation";
 import { IProduct } from "@/app/products/Product";
 import { useEffect } from "react";
 import { usePersonStore } from "@/app/persons/PersonsStore";
 import { useProductStore } from "@/app/products/ProductsStore";
-import ReactPDF from "@react-pdf/renderer";
-//import { PDFViewer } from "@react-pdf/renderer";
-import Report from "./report/Report";
+import { useGetGeoJSONStore } from "../stores/GetGeoJSONStore";
+import { IPolygonSchema } from "../interfaces/polygonSchema";
+import { getLatLngFromPolygon } from "../utils/getLatLngFromPolygon";
+import { thousandsHundredsTensUnitsNumberString } from "../utils/thousandsHundredsTensUnitsNumberString";
+import { useReportStore } from "../stores/ReportStore";
+import { useRouter } from "next/navigation";
 
 interface IProps {
   installation: IInstallation;
 }
 
 export function DownloadReportButton({ installation }: IProps) {
-  const map = useMap();
-  //personService.persons
+  const router = useRouter();
+  
+  const setDataContactsReportStore = useReportStore((state) => state.setDataContacts);
+  const setInstallationReportStore = useReportStore((state) => state.setInstallation);
+  const setdataInstallationReportStore = useReportStore((state) => state.setDataInstallation);
+
   const allPersons = usePersonStore((state) => state.personsData);
-  //productService.products
+  const getPersonsStore = usePersonStore((state) => state.getAll);
   const allProducts = useProductStore((state) => state.productsData);
+  const getProductsStore = useProductStore((state) => state.getAll);
+  const allMarkers = useGetGeoJSONStore((state) => state.installationMarkers);
+  const getInstallationMarkers = useGetGeoJSONStore((state) => state.getInstallationMarkersApi);
+  const allPolygons = useGetGeoJSONStore((state) => state.installationPolygons);  
+  const getInstallationPolygons = useGetGeoJSONStore((state) => state.getInstallationPolygonsApi);
 
   let totalAreaReport: string = "0";
   let installationMarkersReport: string = "0";
 
-  const getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport = (
-    id: string
-  ) => {};
+  const getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport = (id: string) => {
+    getInstallationMarkers(id).then(() => {
+      if (allMarkers.length === 0) installationMarkersReport = "There are no saved markers.";
+      else installationMarkersReport = allMarkers.length.toString();
+    });
+    getInstallationPolygons(id).then(() => {
+      if (allPolygons.length === 0) totalAreaReport = "There are no saved polygons";
+      else {
+        let totalArea: number = 0;
+        allPolygons.forEach((polygon: IPolygonSchema) => {
+          const latLngExpression: L.LatLngExpression[] = getLatLngFromPolygon(polygon);
+          const polygonToMap: L.Polygon = L.polygon(latLngExpression);
+          const area: number = turf.area(polygonToMap.toGeoJSON()) / 10000;
+          totalArea += area;
+        });
+        totalAreaReport = (Math.round(totalArea*10000)/10000).toString().replace('.', ',');
+        totalAreaReport = thousandsHundredsTensUnitsNumberString(totalAreaReport);
+      }
+    });
+  };
 
   useEffect(() => {
-    /*getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport(
-      installation._id
-    );*/
-  });
+    getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport(installation._id);
+    getPersonsStore();
+    getProductsStore()
+  }, []);
 
   const getPersonsInfoFrom = (contacts: string[]) => {
     let persons: IPerson[] = [];
@@ -62,7 +92,7 @@ export function DownloadReportButton({ installation }: IProps) {
       contactsRows.push([
         contact.name,
         contact.email,
-        contact.telephone_number.toString()
+        contact.phoneNumber.toString()
       ]);
     });
     let installationDataRows: string[][] = [];
@@ -86,13 +116,16 @@ export function DownloadReportButton({ installation }: IProps) {
       items: installationDataRows
     };
 
-    const props = {
-      dataContacts: dataContactsRows,
-      installation: installation,
-      dataInstallation: dataInstallationRows
-    };
+    setDataContactsReportStore(dataContactsRows);
+    useReportStore.getState().dataContacts;
 
-    ReactPDF.render(<Report props={props} />, `${__dirname}/report.pdf`);
+    setInstallationReportStore(installation);
+    useReportStore.getState().installation;
+
+    setdataInstallationReportStore(dataInstallationRows);
+    useReportStore.getState().dataInstallation;
+
+    router.push('/report');
   };
 
   return (

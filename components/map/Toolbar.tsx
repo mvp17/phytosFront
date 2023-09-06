@@ -27,7 +27,7 @@ export function Toolbar({ productDensity, productColor, installation}: IProps) {
         <LoadGeoJSONElementsButton installation={installation} productDensity={productDensity} />
         <CleanMapButton />
         <DeleteGeoJSONElementsButton installation={installation} />
-        <ExportMarkersGPXFileButton />
+        <ExportMarkersGPXFileButton installation={installation}/>
         <ImportMarkersGPXFileButton
           productDensity={productDensity}
           productColor={productColor}

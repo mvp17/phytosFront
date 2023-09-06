@@ -22,18 +22,22 @@ interface IProps {
 export function GeomanWrapper({productDensity, productColor}: IProps) {
   const map = useMap();
   const polygons = usePolygonsStore((state) => state.polygonsData);
-  let idForMarkers = useMapDataStore((state) => state.idForMarkers);
   let actionRadius = useMapDataStore((state) => state.actionRadius);
-  let totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
-  let markedProducts = useMapDataStore((state) => state.markedProducts);
-  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
-  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
-  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
-  let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
-  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
-  let totalProducts = useMapDataStore((state) => state.totalProducts);
-  const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
   const polygonColor = useMapDataStore((state) => state.polygonColor);
+
+  let idForMarkers = useMapDataStore((state) => state.idForMarkers);
+  const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+
+  let totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
+  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
+
+  let markedProducts = useMapDataStore((state) => state.markedProducts);
+  const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
+
+  let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
+  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
+
+  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
 
 
   const handleChange = () => {
@@ -80,7 +84,7 @@ export function GeomanWrapper({productDensity, productColor}: IProps) {
       setTotalProducts(
         getTotalProductByTotalArea(totalAreaPolygons, productDensity)
       );
-      totalProducts = useMapDataStore.getState().totalProducts;
+      useMapDataStore.getState().totalProducts;
     }
   }
 

@@ -11,12 +11,12 @@ import { getSession } from 'next-auth/react';
 const baseURL: string = environment.urlConf + "/map";
 
 interface GeoJSONState {
-  markersData: IMarkerSchema[];
-  polygonsData: IPolygonSchema[];
-  linestringsData: ILineStringSchema[];
-  getInstallationMarkersApi: (id: string) => void;
-  getInstallationPolygonsApi: (id: string) => void;
-  getInstallationLinestringsApi: (id: string) => void;
+  installationMarkers: IMarkerSchema[];
+  installationPolygons: IPolygonSchema[];
+  installationLinestrings: ILineStringSchema[];
+  getInstallationMarkersApi: (id: string) => Promise<void>;
+  getInstallationPolygonsApi: (id: string) => Promise<void>;
+  getInstallationLinestringsApi: (id: string) => Promise<void>;
 }
 
 /*
@@ -34,9 +34,9 @@ setState before it.
 export const useGetGeoJSONStore = create<GeoJSONState>()(
   immer(
     devtools((set) => ({
-      markersData: [],
-      polygonsData: [],
-      linestringsData: [],
+      installationMarkers: [],
+      installationPolygons: [],
+      installationLinestrings: [],
       getInstallationMarkersApi: async (id: string) => {
         const defaultOptions = {
           baseURL,
@@ -51,7 +51,7 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
           `${baseURL}/openGeoJSONMarkers/${id}`
         );
         set((state) => {
-          state.markersData = apiResponse.data;
+          state.installationMarkers = apiResponse.data;
         });
       },
 
@@ -69,7 +69,7 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
           `${baseURL}/openGeoJSONPolygons/${id}`
         );
         set((state) => {
-          state.polygonsData = apiResponse.data;
+          state.installationPolygons = apiResponse.data;
         });
       },
 
@@ -87,7 +87,7 @@ export const useGetGeoJSONStore = create<GeoJSONState>()(
           `${baseURL}/openGeoJSONLineStrings/${id}`
         );
         set((state) => {
-          state.linestringsData = apiResponse.data;
+          state.installationLinestrings = apiResponse.data;
         });
       }
     }))

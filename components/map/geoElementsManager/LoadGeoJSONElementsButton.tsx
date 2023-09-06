@@ -1,3 +1,5 @@
+import * as L from "leaflet";
+import * as turf from "@turf/turf";
 import { Button } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
@@ -5,7 +7,6 @@ import { useMap } from "react-leaflet";
 import { useGetGeoJSONStore } from "../stores/GetGeoJSONStore";
 import { IInstallation } from "@/app/installations/Installation";
 import { IMarkerSchema } from "../interfaces/markerSchema";
-import * as L from "leaflet";
 import { areThereAnyMarkers } from "../utils/areThereAnyMarkers";
 import { getMarkersFromMap } from "../utils/getMarkersFromMap";
 import { greatestWaypointAmongAllLeaflet } from "../utils/greatestWaypointAmongAllLeaflet";
@@ -19,7 +20,7 @@ import { usePolygonsStore } from "../stores/PolygonsStore";
 import { useMapDataStore } from "../stores/MapDataStore";
 import { IPolygonMap } from "../interfaces/polygonMap";
 import { getTotalProductByTotalArea } from "../utils/getTotalProductByTotalArea";
-import * as turf from "@turf/turf";
+
 
 interface IProps {
   installation: IInstallation;
@@ -28,37 +29,30 @@ interface IProps {
 
 export function LoadGeoJSONElementsButton({ installation, productDensity }: IProps) {
   const map = useMap();
+  const polygonsFromStore = usePolygonsStore((state) => state.polygonsData);
+
+  const allInstallationMarkers = useGetGeoJSONStore((state) => state.installationMarkers);
+  const getInstallationMarkers = useGetGeoJSONStore((state) => state.getInstallationMarkersApi);
+
+  const allInstallationLinestrings = useGetGeoJSONStore((state) => state.installationLinestrings);
+  const getInstallationLinestrings = useGetGeoJSONStore((state) => state.getInstallationLinestringsApi);
+
+  const allInstallationPolygons = useGetGeoJSONStore((state) => state.installationPolygons);  
+  const getInstallationPolygons = useGetGeoJSONStore((state) => state.getInstallationPolygonsApi);
+
   let idForMarkers = useMapDataStore((state) => state.idForMarkers);
   const setIdForMarkers = useMapDataStore((state) => state.setIdForMarkers);
+
   let markedProducts = useMapDataStore((state) => state.markedProducts);
   const setMarkedProducts = useMapDataStore((state) => state.setMarkedProducts);
 
-  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
-  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
-  let totalAreaPolygonsString = useMapDataStore((state) => state.totalAreaPolygonsString);
-  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
-  let totalProducts = useMapDataStore((state) => state.totalProducts);
   let totalAreaPolygons = useMapDataStore((state) => state.totalAreaPolygons);
+  const setTotalAreaPolygons = useMapDataStore((state) => state.setTotalAreaPolygons);
+  
+  const setTotalAreaPolygonsString = useMapDataStore((state) => state.setTotalAreaPolygonsString);
 
-  const polygonsFromStore = usePolygonsStore((state) => state.polygonsData);
-  const allInstallationMarkers = useGetGeoJSONStore(
-    (state) => state.markersData
-  );
-  const allInstallationLinestrings = useGetGeoJSONStore(
-    (state) => state.linestringsData
-  );
-  const allInstallationPolygons = useGetGeoJSONStore(
-    (state) => state.polygonsData
-  );
-  const getInstallationMarkersApi = useGetGeoJSONStore(
-    (state) => state.getInstallationMarkersApi
-  );
-  const getInstallationLinestringsApi = useGetGeoJSONStore(
-    (state) => state.getInstallationLinestringsApi
-  );
-  const getInstallationPolygonsApi = useGetGeoJSONStore(
-    (state) => state.getInstallationPolygonsApi
-  );
+  const setTotalProducts = useMapDataStore((state) => state.setTotalProducts);
+
 
   const savePolygons = (polygon: L.Layer, polygons: IPolygonMap[], productDensity: number) => {
     if (polygon instanceof L.Polygon) {
@@ -95,117 +89,110 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
       setTotalAreaPolygonsString(
         thousandsHundredsTensUnitsNumberString(areaString)
       );
-      totalAreaPolygonsString = useMapDataStore.getState().totalAreaPolygonsString;
+      useMapDataStore.getState().totalAreaPolygonsString;
       
       setTotalProducts(
         getTotalProductByTotalArea(totalAreaPolygons, productDensity)
       );
-      totalProducts = useMapDataStore.getState().totalProducts;
+      useMapDataStore.getState().totalProducts;
     }
   }
 
   const load = () => {
-    getInstallationMarkersApi(installation._id);
-    const markers: IMarkerSchema[] = allInstallationMarkers;
-    if (markers.length === 0)
+    getInstallationMarkers(installation._id).then(() => {
+      if (allInstallationMarkers.length === 0)
       alert("No hi ha waypoints guardats per aquesta instal·lació!");
-    else {
-      const layers: L.Layer[] = L.PM.Utils.findLayers(map);
-      if (areThereAnyMarkers(layers)) {
-        if (
-          window.confirm(
-            "OK: Carregar els punts guardats anteriorment juntament amb els que has posat ara.\n" +
-              "Cancel: No carregar-los."
-          )
-        ) {
-          // Si entra aquí, carregarà els punts guardats de la bd juntament amb els que hi ha al mapa.
-          const markersFromMapInit: L.Marker[] = getMarkersFromMap(layers);
-          setIdForMarkers(
-            greatestWaypointAmongAllLeaflet(markersFromMapInit)
-          );
-          idForMarkers = useMapDataStore.getState().idForMarkers;
-
-          markers.forEach((marker: IMarkerSchema) => {
-            const latLngExpression = L.latLng(
-              marker.coordinates[0],
-              marker.coordinates[1]
+      else {
+        const layers: L.Layer[] = L.PM.Utils.findLayers(map);
+        if (areThereAnyMarkers(layers)) {
+          if (
+            window.confirm(
+              "OK: Carregar els punts guardats anteriorment juntament amb els que has posat ara.\n" +
+                "Cancel: No carregar-los."
+            )
+          ) {
+            // Si entra aquí, carregarà els punts guardats de la bd juntament amb els que hi ha al mapa.
+            const markersFromMapInit: L.Marker[] = getMarkersFromMap(layers);
+            setIdForMarkers(
+              greatestWaypointAmongAllLeaflet(markersFromMapInit)
             );
-            const markerToMap: L.Marker = L.marker(latLngExpression);
-            setIdForMarkers(idForMarkers + 1);
             idForMarkers = useMapDataStore.getState().idForMarkers;
-            markerToMap.setIcon(
-              L.divIcon({
-                html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${idForMarkers.toString()}</b>`
-              })
-            );
-            markerToMap.bindPopup(idForMarkers.toString());
-            map.addLayer(markerToMap);
-            // It is supposed that in here there are less added products to the map
-            // than the total number of products available for the installation.
-            setMarkedProducts(markedProducts + 1);
-            markedProducts = useMapDataStore.getState().markedProducts;
-          });
-          // First marker position to fly on map.
-          const latLngToFly = L.latLng(
-            markers[0].coordinates[0],
-            markers[0].coordinates[1]
-          );
-          map.flyTo(latLngToFly, 15);
-          const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
-          const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
-          setIdForMarkers(
-            greatestWaypointAmongAllLeaflet(markersFromMapEnd)
-          );
-          idForMarkers = useMapDataStore.getState().idForMarkers;
-        }
-      } else {
-        if (
-          window.confirm(
-            "OK: Carregar poligons i punts guardats.\nCancel: Carregar només els poligons."
-          )
-        ) {
-          // Si entra aquí, només carregarà els punts guardats de la bd.
-          // Després carregarà si hi ha linestrings i/o poligons.
-          markers.forEach((marker: IMarkerSchema) => {
-            const latLngExpression = L.latLng(
-              marker.coordinates[0],
-              marker.coordinates[1]
-            );
-            const markerToMap: L.Marker = L.marker(latLngExpression);
-            markerToMap.setIcon(
-              L.divIcon({
-                html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${marker.waypoint.toString()}</b>`
-              })
-            );
-            markerToMap.bindPopup(marker.waypoint.toString());
 
-            map.addLayer(markerToMap);
-            // It is supposed that in here there are less added products to the map
-            // than the total number of products available for the installation.
-            // TODO this.mapService.markedProducts += 1;
-          });
-          // First marker position to fly on map.
-          const latLngToFly = L.latLng(
-            markers[0].coordinates[0],
-            markers[0].coordinates[1]
-          );
-          map.flyTo(latLngToFly, 15);
-          const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
-          const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
-          setIdForMarkers(
-            greatestWaypointAmongAllLeaflet(markersFromMapEnd)
-          );
-          idForMarkers = useMapDataStore.getState().idForMarkers;
+            allInstallationMarkers.forEach((marker: IMarkerSchema) => {
+              const latLngExpression = L.latLng(
+                marker.coordinates[0],
+                marker.coordinates[1]
+              );
+              const markerToMap: L.Marker = L.marker(latLngExpression);
+              setIdForMarkers(idForMarkers + 1);
+              idForMarkers = useMapDataStore.getState().idForMarkers;
+              markerToMap.setIcon(
+                L.divIcon({
+                  html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${idForMarkers.toString()}</b>`
+                })
+              );
+              markerToMap.bindPopup(idForMarkers.toString());
+              map.addLayer(markerToMap);
+              // It is supposed that in here there are less added products to the map
+              // than the total number of products available for the installation.
+              setMarkedProducts(markedProducts + 1);
+              markedProducts = useMapDataStore.getState().markedProducts;
+            });
+            // First marker position to fly on map.
+            const latLngToFly = L.latLng(
+              allInstallationMarkers[0].coordinates[0],
+              allInstallationMarkers[0].coordinates[1]
+            );
+            map.flyTo(latLngToFly, 15);
+            const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
+            const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
+            setIdForMarkers(greatestWaypointAmongAllLeaflet(markersFromMapEnd));
+            idForMarkers = useMapDataStore.getState().idForMarkers;
+          }
+        } else {
+          if (window.confirm("OK: Carregar poligons i punts guardats.\nCancel: Carregar només els poligons.")) {
+            // Si entra aquí, només carregarà els punts guardats de la bd.
+            // Després carregarà si hi ha linestrings i/o poligons.
+            allInstallationMarkers.forEach((marker: IMarkerSchema) => {
+              const latLngExpression = L.latLng(
+                marker.coordinates[0],
+                marker.coordinates[1]
+              );
+              const markerToMap: L.Marker = L.marker(latLngExpression);
+              markerToMap.setIcon(
+                L.divIcon({
+                  html: `&nbsp;&nbsp;&nbsp;&nbsp; <b class="strokeme"> ${marker.waypoint.toString()}</b>`
+                })
+              );
+              markerToMap.bindPopup(marker.waypoint.toString());
+
+              map.addLayer(markerToMap);
+              // It is supposed that in here there are less added products to the map
+              // than the total number of products available for the installation.
+              // TODO this.mapService.markedProducts += 1;
+            });
+            // First marker position to fly on map.
+            const latLngToFly = L.latLng(
+              allInstallationMarkers[0].coordinates[0],
+              allInstallationMarkers[0].coordinates[1]
+            );
+            map.flyTo(latLngToFly, 15);
+            const layersEnd: L.Layer[] = L.PM.Utils.findLayers(map);
+            const markersFromMapEnd: L.Marker[] = getMarkersFromMap(layersEnd);
+            setIdForMarkers(
+              greatestWaypointAmongAllLeaflet(markersFromMapEnd)
+            );
+            idForMarkers = useMapDataStore.getState().idForMarkers;
+          }
         }
       }
-    }
+    });
 
-    getInstallationLinestringsApi(installation._id);
-    const linestrings: ILineStringSchema[] = allInstallationLinestrings;
-    if (linestrings.length === 0)
+    getInstallationLinestrings(installation._id).then(() => {
+      if (allInstallationLinestrings.length === 0)
       alert("No hi ha distàncies guardades per aquesta instal·lació!");
     else {
-      linestrings.forEach((lineString: ILineStringSchema) => {
+      allInstallationLinestrings.forEach((lineString: ILineStringSchema) => {
         const latLngExpression: L.LatLngExpression[] = getLatLngFromLinestring(
           lineString
         );
@@ -220,21 +207,22 @@ export function LoadGeoJSONElementsButton({ installation, productDensity }: IPro
         map.addLayer(lineStringToMap);
       });
     }
+    });    
 
-    getInstallationPolygonsApi(installation._id);
-    const polygons: IPolygonSchema[] = allInstallationPolygons;
-    if (polygons.length === 0)
-      alert("No hi ha polígons guardats per aquesta instal·lació!");
-    else {
-      polygons.forEach((polygon: IPolygonSchema) => {
-        const latLngExpression: L.LatLngExpression[] = getLatLngFromPolygon(
-          polygon
-        );
-        const polygonToMap: L.Polygon = L.polygon(latLngExpression);
-        map.addLayer(polygonToMap);
-        savePolygons(polygonToMap, polygonsFromStore, productDensity);
-      });
-    }
+    getInstallationPolygons(installation._id).then(() => {
+      if (allInstallationPolygons.length === 0)
+        alert("No hi ha polígons guardats per aquesta instal·lació!");
+      else {
+        allInstallationPolygons.forEach((polygon: IPolygonSchema) => {
+          const latLngExpression: L.LatLngExpression[] = getLatLngFromPolygon(
+            polygon
+          );
+          const polygonToMap: L.Polygon = L.polygon(latLngExpression);
+          map.addLayer(polygonToMap);
+          savePolygons(polygonToMap, polygonsFromStore, productDensity);
+        });
+      }
+    });
   };
 
   return (

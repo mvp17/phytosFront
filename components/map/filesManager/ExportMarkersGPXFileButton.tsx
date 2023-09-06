@@ -2,8 +2,18 @@ import { Button } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { IMarkerSchema } from "../interfaces/markerSchema";
+import { useGetGeoJSONStore } from "../stores/GetGeoJSONStore";
+import { IInstallation } from "@/app/installations/Installation";
 
-const ExportMarkersGPXFileButton = () => {
+
+interface IProps {
+  installation: IInstallation;
+}
+
+const ExportMarkersGPXFileButton = ({ installation}: IProps) => {
+  const geoJSONMarkers = useGetGeoJSONStore((state) => state.installationMarkers);
+  const getInstallationMarkers = useGetGeoJSONStore((state) => state.getInstallationMarkersApi);
+
   const createGPXFileWith = (markersCoordinates: Array<number[]>) => {
     let result: string =
       '<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" creator="opennatur"><metadata/>';
@@ -27,7 +37,7 @@ const ExportMarkersGPXFileButton = () => {
 
   const exportGPX = () => {
     // mapstore, axios request
-    const geoJSONMarkers: IMarkerSchema[] = [];
+    getInstallationMarkers(installation._id);
 
     if (geoJSONMarkers.length === 0)
       alert("No hi ha waypoints guardats per aquesta instal·lació.");
