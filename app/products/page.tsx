@@ -50,15 +50,15 @@ const ProductsPage = () => {
   const [editForm] = useForm();
 
   const allProducts = useProductStore((state) => state.productsData);
-  const callGetApi = useProductStore((state) => state.getAll);
-  const callPostApi = useProductStore((state) => state.createProduct);
-  const callPutApi = useProductStore((state) => state.updateProduct);
-  const callDeleteApi = useProductStore((state) => state.deleteProduct);
+  const getProductsStore = useProductStore((state) => state.getAll);
+  const postProductStore = useProductStore((state) => state.createProduct);
+  const putProductStore = useProductStore((state) => state.updateProduct);
+  const deleteProductStore = useProductStore((state) => state.deleteProduct);
 
   useEffect(() => {
     if (allProducts.length === 0) {
       setDataSourceLoading(true);
-      callGetApi();
+      getProductsStore();
       setDataSourceLoading(false);
     }
   }, []);
@@ -73,7 +73,7 @@ const ProductsPage = () => {
   };
 
   const onFinishCreateProductForm = (product: IProduct) => {
-    callPostApi(product, session?.jwtToken!)
+    postProductStore(product, session?.jwtToken!)
       .then(() => {
         closeCreateModal();
         message.success("The product has been created successfully.");
@@ -84,7 +84,7 @@ const ProductsPage = () => {
   };
 
   const onFinishEditProductForm = (product: IProduct) => {
-    callPutApi(product, currentRecord!._id, session?.jwtToken!)
+    putProductStore(product, currentRecord!._id, session?.jwtToken!)
       .then(() => {
         closeEditModal();
         message.success("The product has been updated successfully.");
@@ -95,7 +95,7 @@ const ProductsPage = () => {
   };
 
   const deleteProduct = (_id: string) => {
-    callDeleteApi(_id, session?.jwtToken!)
+    deleteProductStore(_id, session?.jwtToken!)
       .then(() => {
         message.success("The product has been deleted successfully.");
       })

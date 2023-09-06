@@ -24,7 +24,7 @@ const MapPage = () => {
             loading: () => <p>A map is loading</p>,
             ssr: false 
         }
-    ), [])
+    ), []);
     useEffect(() => {
         getInstallation(installationId!);
     }, []);
