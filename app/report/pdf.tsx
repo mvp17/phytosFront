@@ -1,13 +1,17 @@
 import { Page, Text, View, Document, StyleSheet, PDFViewer } from "@react-pdf/renderer";
 import { IInstallation } from "@/app/installations/Installation";
-import Table from "./table/Table";
 import { useEffect } from "react";
 import { useReportStore } from "../../components/map/stores/ReportStore";
 
 interface IProps {
-  dataContacts: { items: string[][] };
   installation: IInstallation;
-  dataInstallation: { items: string[][] };
+  variety: string;
+  totalArea: string;
+  usedProduct: string;
+  productsToInstall: string;
+  contactsNames: string[];
+  contactsEmails: string[];
+  contactsPhoneNumbers: string[];
 }
 
 const styles = StyleSheet.create({
@@ -22,7 +26,15 @@ const styles = StyleSheet.create({
   }
 });
 
-const PDF = ({dataContacts, installation, dataInstallation}: IProps) => {
+const PDF = ({installation, 
+              variety, 
+              totalArea, 
+              usedProduct, 
+              productsToInstall,
+              contactsNames,
+              contactsEmails,
+              contactsPhoneNumbers
+            }: IProps) => {
   return (
     <Document>
     <Page size="A4" style={styles.page}>
@@ -32,8 +44,12 @@ const PDF = ({dataContacts, installation, dataInstallation}: IProps) => {
         <Text>Plantation: {installation.plantationName}</Text>
         <Text>Season: {installation.seasonYear}</Text>
         <Text> </Text>
-        <Text>Data:</Text>
-        <Table data={dataInstallation} />
+        <View>
+          <Text>Variety: {variety}</Text>
+          <Text>Total Area: {totalArea}</Text>
+          <Text>Used Product: {usedProduct}</Text>
+          <Text>Products To Install: {productsToInstall}</Text>
+        </View>
         <Text> </Text>
         <Text>Installation date: {installation.installationDate}</Text>
         <Text>Activation date: {installation.activationDate}</Text>
@@ -43,7 +59,11 @@ const PDF = ({dataContacts, installation, dataInstallation}: IProps) => {
         <Text>Polygons and plots: {installation.plotName}</Text>
         <Text> </Text>
         <Text>Contacts:</Text>
-        <Table data={dataContacts} />
+        <View>
+          <Text>Contact Name: {contactsNames.map((value) => {return "[" + value + "]"})}</Text>
+          <Text>Contact Email: {contactsEmails.map((value) => {return "[" + value + "]"})}</Text>
+          <Text>Contact Phone Number: {contactsPhoneNumbers.map((value) => {return "[" + value + "]"})}</Text>
+        </View>
         <Text> </Text>
         <Text>Features: {installation.features}</Text>
         <Text>Projection observations: {installation.projectionObservations}</Text>
@@ -65,15 +85,29 @@ const PDF = ({dataContacts, installation, dataInstallation}: IProps) => {
 }
 
 const PDFView = () => {
-  const dataContacts = useReportStore((state) => state.dataContacts);
   const installation = useReportStore((state) => state.installation);
-  const dataInstallation = useReportStore((state) => state.dataInstallation);
+  const variety = useReportStore((state) => state.variety);
+  const totalArea = useReportStore((state) => state.totalArea);
+  const usedProduct = useReportStore((state) => state.usedProduct);
+  const productsToInstall = useReportStore((state) => state.productsToInstall);
+  const contactsNames = useReportStore((state) => state.contactName);
+  const contactsEmails = useReportStore((state) => state.contactEmail);
+  const contactsPhoneNumbers = useReportStore((state) => state.contactPhoneNumber);
+
 
   useEffect(() => {}, []);
 
   return(
   <PDFViewer height={window.innerHeight} width={window.innerWidth}>
-      <PDF dataContacts={dataContacts} installation={installation} dataInstallation={dataInstallation}/>
+      <PDF installation = {installation} 
+           variety = {variety} 
+           totalArea = {totalArea} 
+           usedProduct = {usedProduct} 
+           productsToInstall = {productsToInstall}
+           contactsNames = {contactsNames}
+           contactsEmails = {contactsEmails}
+           contactsPhoneNumbers = {contactsPhoneNumbers}
+           />
   </PDFViewer>
   )
 }

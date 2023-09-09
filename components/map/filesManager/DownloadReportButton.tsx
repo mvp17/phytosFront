@@ -23,9 +23,14 @@ interface IProps {
 export function DownloadReportButton({ installation }: IProps) {
   const router = useRouter();
   
-  const setDataContactsReportStore = useReportStore((state) => state.setDataContacts);
+  const setVarietyReportStore = useReportStore((state) => state.setVariety);
+  const setTotalAreaReportStore = useReportStore((state) => state.setTotalArea);
+  const setUsedProductReportStore = useReportStore((state) => state.setUsedProduct);
+  const setProductsToInstallReportStore = useReportStore((state) => state.setProductsToInstall);
   const setInstallationReportStore = useReportStore((state) => state.setInstallation);
-  const setdataInstallationReportStore = useReportStore((state) => state.setDataInstallation);
+  const setContactNameReportStore = useReportStore((state) => state.setContactName);
+  const setContactEmailReportStore = useReportStore((state) => state.setContactEmail);
+  const setContactPhoneNumberReportStore = useReportStore((state) => state.setContactPhoneNumber);
 
   const allPersons = usePersonStore((state) => state.personsData);
   const getPersonsStore = usePersonStore((state) => state.getAll);
@@ -39,29 +44,7 @@ export function DownloadReportButton({ installation }: IProps) {
   let totalAreaReport: string = "0";
   let installationMarkersReport: string = "0";
 
-  const getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport = (id: string) => {
-    getInstallationMarkers(id).then(() => {
-      if (allMarkers.length === 0) installationMarkersReport = "There are no saved markers.";
-      else installationMarkersReport = allMarkers.length.toString();
-    });
-    getInstallationPolygons(id).then(() => {
-      if (allPolygons.length === 0) totalAreaReport = "There are no saved polygons";
-      else {
-        let totalArea: number = 0;
-        allPolygons.forEach((polygon: IPolygonSchema) => {
-          const latLngExpression: L.LatLngExpression[] = getLatLngFromPolygon(polygon);
-          const polygonToMap: L.Polygon = L.polygon(latLngExpression);
-          const area: number = turf.area(polygonToMap.toGeoJSON()) / 10000;
-          totalArea += area;
-        });
-        totalAreaReport = (Math.round(totalArea*10000)/10000).toString().replace('.', ',');
-        totalAreaReport = thousandsHundredsTensUnitsNumberString(totalAreaReport);
-      }
-    });
-  };
-
   useEffect(() => {
-    getSavedMarkersAndSavedPolygonsTotalAreaFromInstallationForReport(installation._id);
     getPersonsStore();
     getProductsStore()
   }, []);
@@ -85,47 +68,60 @@ export function DownloadReportButton({ installation }: IProps) {
   };
 
   const download = () => {
-    let contactsRows: string[][] = [];
-    let contactsForReport = getPersonsInfoFrom(installation.contacts);
-    contactsRows.push(["Nom", "Mail", "Telèfon"]);
-    contactsForReport.forEach((contact) => {
-      contactsRows.push([
-        contact.name,
-        contact.email,
-        contact.phoneNumber.toString()
-      ]);
+    getInstallationMarkers(installation._id).then(() => {
+      if (allMarkers.length === 0) installationMarkersReport = "There are no saved markers.";
+      else installationMarkersReport = allMarkers.length.toString();
+      getInstallationPolygons(installation._id).then(() => {
+        if (allPolygons.length === 0) totalAreaReport = "There are no saved polygons";
+        else {
+          let totalArea: number = 0;
+          allPolygons.forEach((polygon: IPolygonSchema) => {
+            const latLngExpression: L.LatLngExpression[] = getLatLngFromPolygon(polygon);
+            const polygonToMap: L.Polygon = L.polygon(latLngExpression);
+            const area: number = turf.area(polygonToMap.toGeoJSON()) / 10000;
+            totalArea += area;
+          });
+          totalAreaReport = (Math.round(totalArea*10000)/10000).toString().replace('.', ',');
+          totalAreaReport = thousandsHundredsTensUnitsNumberString(totalAreaReport);
+        }
+        let contactsForReport = getPersonsInfoFrom(installation.contacts);
+        let contactsNames: string[] = [];
+        let contactsEmails: string[] = [];
+        let contactsPhoneNumbers: string[] = [];
+
+        contactsForReport.forEach((contact) => {
+          contactsNames.push(contact.name);
+          contactsEmails.push(contact.email);
+          contactsPhoneNumbers.push(contact.phoneNumber.toString());
+        });
+
+        setVarietyReportStore(getVarietyFromProduct(installation.productName));
+        useReportStore.getState().variety;
+
+        setTotalAreaReportStore(totalAreaReport + " ha");
+        useReportStore.getState().totalArea;
+
+        setUsedProductReportStore(installation.productName);
+        useReportStore.getState().usedProduct;
+
+        setProductsToInstallReportStore(installationMarkersReport);
+        useReportStore.getState().productsToInstall;
+
+        setInstallationReportStore(installation);
+        useReportStore.getState().installation;
+        
+        setContactNameReportStore(contactsNames);
+        useReportStore.getState().contactName;
+
+        setContactEmailReportStore(contactsEmails);
+        useReportStore.getState().contactEmail;
+        
+        setContactPhoneNumberReportStore(contactsPhoneNumbers);
+        useReportStore.getState().contactPhoneNumber;
+
+        router.push('/report');
+      });
     });
-    let installationDataRows: string[][] = [];
-    installationDataRows.push([
-      "Varietats",
-      "Àrea total",
-      "Producte Utilitzat",
-      "Productes per instal·lar"
-    ]);
-    installationDataRows.push([
-      getVarietyFromProduct(installation.productName),
-      totalAreaReport + " ha",
-      installation.productName,
-      installationMarkersReport
-    ]);
-
-    const dataContactsRows = {
-      items: contactsRows
-    };
-    const dataInstallationRows = {
-      items: installationDataRows
-    };
-
-    setDataContactsReportStore(dataContactsRows);
-    useReportStore.getState().dataContacts;
-
-    setInstallationReportStore(installation);
-    useReportStore.getState().installation;
-
-    setdataInstallationReportStore(dataInstallationRows);
-    useReportStore.getState().dataInstallation;
-
-    router.push('/report');
   };
 
   return (
