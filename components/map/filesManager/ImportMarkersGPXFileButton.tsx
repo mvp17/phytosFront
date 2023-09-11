@@ -3,12 +3,11 @@ import Tooltip from "@mui/material/Tooltip";
 import UploadIcon from "@mui/icons-material/Upload";
 import { useMap } from "react-leaflet";
 import * as L from "leaflet";
-import { Dispatch, SetStateAction } from "react";
 import { createCircleWithActionRadius } from "../utils/createCircleWithAcionRadius";
 import { useMapDataStore } from "../stores/MapDataStore";
 import { greatestWaypointAmongAllLeaflet } from "../utils/greatestWaypointAmongAllLeaflet";
 
-type Dispatcher = Dispatch<SetStateAction<number>>;
+
 interface IProps {
   productDensity: number;
   productColor: string;

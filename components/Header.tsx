@@ -5,7 +5,8 @@ import { AiOutlineHome,
   AiOutlineContacts, 
   AiOutlineCalendar, 
   AiOutlineBug,
-  AiOutlineFunnelPlot
+  AiOutlineFunnelPlot,
+  AiOutlineDashboard
 } from "react-icons/ai";
 
 const links = [
@@ -38,6 +39,11 @@ const links = [
     label: 'Installations',
     route: '/installations',
     icon: <AiOutlineFunnelPlot />
+  },
+  {
+    label: 'Dashboard',
+    route: '/dashboard',
+    icon: <AiOutlineDashboard/>
   }
 ];
 

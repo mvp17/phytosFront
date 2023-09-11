@@ -171,7 +171,7 @@ const MapComponent = ({ installation }: IProps) => {
           center={[40.463667, -3.74922]}
           zoom={7}
           scrollWheelZoom={true}
-           // @ts-ignore
+          // @ts-ignore
           ref={setMap}
           style={{
             height: "500px",

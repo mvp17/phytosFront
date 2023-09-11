@@ -306,6 +306,20 @@ const ProductsPage = () => {
             />
             <Column
               align={"center"}
+              title="Color"
+              dataIndex="color"
+              key="color"
+              sortDirections={["descend", "ascend"]}
+              sorter={{
+                compare: (a: IProduct, b: IProduct) =>
+                  alphabeticalSort(a._id, b._id),
+                multiple: 3
+              }}
+              filterIcon={() => <SearchOutlined />}
+              render={(value) => <Input type="color" value={value} disabled />}
+            />
+            <Column
+              align={"center"}
               title="Actions"
               fixed={"right"}
               render={(value: IProduct, record: IProduct) => {
